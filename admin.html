@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-dark: #1a6b00;
+      --green-light: #4fc800;
+      --admin-bg: #120800;
+      --admin-border: #c8640a;
+      --danger: #7a0000;
+      --input-bg: #0a0400;
+      --panel-border: #3a1500;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Press Start 2P", monospace;
+      background: var(--admin-bg);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    .admin-header {
+      background: #000;
+      border-bottom: 2px solid var(--admin-border);
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .admin-header h1 {
+      font-size: 10px;
+      color: var(--admin-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-header .status {
+      font-size: 7px;
+      color: #666;
+      text-transform: lowercase;
+    }
+    .btn-exit {
+      background: #330000;
+      color: #ff4444;
+      border: 1px solid #ff4444;
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      padding: 8px 15px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .btn-exit:hover { background: #550000; }
+
+    .admin-body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    .section-header {
+      color: var(--admin-border);
+      font-size: 9px;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 40px;
+    }
+    .admin-form label {
+      font-size: 8px;
+      color: #888;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .admin-form select,
+    .admin-form input[type="text"],
+    .admin-form textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      padding: 12px;
+      outline: none;
+    }
+    .admin-form select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23c8640a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px top 50%;
+      background-size: 8px auto;
+    }
+    .admin-form textarea { min-height: 120px; resize: none; }
+
+    .form-section { display: flex; flex-direction: column; gap: 12px; }
+
+    .btn-publish {
+      background: #1a5c00;
+      color: #fff;
+      border: 1px solid #4fc800;
+      font-family: "Press Start 2P", monospace;
+      font-size: 9px;
+      padding: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+    .btn-publish:hover { background: #227a00; }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--panel-border);
+      color: #666;
+      font-family: "Press Start 2P", monospace;
+      font-size: 7px;
+      padding: 10px 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn.active {
+      color: var(--admin-border);
+      border-color: var(--admin-border);
+    }
+
+    #admin-list {
+      border-top: 1px solid var(--panel-border);
+      padding-top: 20px;
+      font-size: 7px;
+      color: #555;
+    }
+
+    .admin-post-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0a0400;
+      border: 1px solid #222;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .admin-post-item h4 { font-size: 8px; color: #ccc; margin-bottom: 5px; }
+    .admin-post-item span { font-size: 6px; color: #555; }
+    .btn-delete {
+      background: #440000;
+      color: #ff8888;
+      border: 1px solid #ff8888;
+      font-family: "Press Start 2P", monospace;
+      font-size: 6px;
+      padding: 5px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-delete:hover { background: #660000; }
+
+    /* Quiz opciones en admin */
+    .quiz-opcion-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .quiz-opcion-row input[type="radio"] {
+      accent-color: var(--admin-border);
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .quiz-opcion-row .sep {
+      color: var(--admin-border);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .quiz-opcion-row input[type="text"] {
+      flex: 1;
+    }
+
+    .btn-add-opcion {
+      background: none;
+      border: 1px dashed var(--panel-border);
+      color: var(--admin-border);
+      font-family: "Press Start 2P", monospace;
+      font-size: 7px;
+      cursor: pointer;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+    }
+    .btn-add-opcion:hover { border-color: var(--admin-border); }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #000;
+      border: 1px solid var(--green-light);
+      color: var(--green-light);
+      padding: 12px 20px;
+      font-size: 7px;
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    #access-denied {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      gap: 20px;
+    }
+
+    .hint {
+      font-size: 6px;
+      color: #555;
+      margin-top: -8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ACCESO DENEGADO -->
+  <div id="access-denied" style="display:none;">
+    <span style="font-size:20px;">&#128274;</span>
+    <p style="color:var(--danger); font-size:9px;">ACCESO DENEGADO</p>
+    <a href="index.html" style="color:var(--admin-border); font-size:8px; text-decoration:none;">&larr; VOLVER</a>
+  </div>
+
+  <!-- PANEL ADMIN -->
+  <div id="admin-panel" style="display:none;">
+    <div class="admin-header">
+      <h1><span>&#10033;</span> PANEL DE DESARROLLADOR</h1>
+      <div style="display:flex; align-items:center; gap:20px;">
+        <span class="status">Modo oculto activo</span>
+        <button class="btn-exit" onclick="cerrarSesion()">&#10005; SALIR</button>
+      </div>
+    </div>
+
+    <div class="admin-body">
+
+      <!-- NUEVA PUBLICACIÓN -->
+      <div class="section-header"><span>+</span> NUEVA PUBLICACIÓN</div>
+
+      <div class="admin-form">
+        <div>
+          <label>TIPO DE CONTENIDO</label>
+          <select id="tipo-contenido" onchange="cambiarFormulario()">
+            <option value="noticia">&#9632; NOTICIA</option>
+            <option value="curiosidad">&#9632; DATO CURIOSO</option>
+            <option value="quiz">&#9632; QUIZ</option>
+          </select>
+        </div>
+
+        <!-- FORMULARIO NOTICIA -->
+        <div id="form-noticia" class="form-section" style="display:none;">
+          <div>
+            <label>TÍTULO *</label>
+            <input type="text" id="n-titulo" placeholder="Título de la noticia..." />
+          </div>
+          <div>
+            <label>IMAGEN (URL, opcional)</label>
+            <input type="text" id="n-imagen" placeholder="https://... (opcional)" />
+            <p class="hint">Déjalo vacío si no quieres imagen</p>
+          </div>
+          <div>
+            <label>TEXTO *</label>
+            <textarea id="n-texto" placeholder="Escribe el contenido de la noticia..."></textarea>
+          </div>
+          <button class="btn-publish" onclick="publicarNoticia()">&#9654; PUBLICAR NOTICIA</button>
+        </div>
+
+        <!-- FORMULARIO CURIOSIDAD -->
+        <div id="form-curiosidad" class="form-section" style="display:none;">
+          <div>
+            <label>DATO CURIOSO *</label>
+            <textarea id="c-texto" placeholder="Escribe el dato curioso..."></textarea>
+          </div>
+          <button class="btn-publish" onclick="publicarCuriosidad()">&#9654; PUBLICAR CURIOSIDAD</button>
+        </div>
+
+        <!-- FORMULARIO QUIZ -->
+        <div id="form-quiz" class="form-section" style="display:none;">
+          <div>
+            <label>PREGUNTA *</label>
+            <input type="text" id="q-pregunta" placeholder="Escribe la pregunta..." />
+          </div>
+          <div>
+            <label>OPCIONES</label>
+            <p class="hint" style="margin-bottom:10px;">El &#9711; a la izquierda marca la opción correcta</p>
+            <div id="quiz-opciones">
+              <div class="quiz-opcion-row">
+                <input type="radio" name="q-correcta" value="0" checked />
+                <span class="sep">·</span>
+                <input type="text" class="q-opt" placeholder="Opción 1..." />
+              </div>
+              <div class="quiz-opcion-row">
+                <input type="radio" name="q-correcta" value="1" />
+                <span class="sep">·</span>
+                <input type="text" class="q-opt" placeholder="Opción 2..." />
+              </div>
+            </div>
+            <button class="btn-add-opcion" id="btn-add-opcion" onclick="addOpcion()">+ AÑADIR OPCIÓN</button>
+          </div>
+          <button class="btn-publish" onclick="publicarQuiz()">&#9654; PUBLICAR QUIZ</button>
+        </div>
+      </div>
+
+      <!-- CONTENIDO PUBLICADO -->
+      <div class="section-header"><span>&#9632;</span> CONTENIDO PUBLICADO</div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('noticia', this)">&#9632; NOTICIAS</button>
+        <button class="tab-btn" onclick="switchAdminTab('curiosidad', this)">&#128161; DATOS CURIOSOS</button>
+        <button class="tab-btn" onclick="switchAdminTab('quiz', this)">? QUIZ</button>
+      </div>
+
+      <div id="admin-list">No hay contenido publicado.</div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      const ADMIN_KEY = [109,99,95,97,100,109,105,110].map(c=>String.fromCharCode(c)).join('');
+      const ADMIN_VAL = [116,114,117,101].map(c=>String.fromCharCode(c)).join('');
+
+      const _B="https://api.jsonbin.io/v3/b/";
+      const _K=[36,50,97,36,49,48,36,115,50,115,115,99,55,66,76,100,73,106,88,51,89,66,113,98,47,49,112,103,79,80,115,117,122,75,122,66,121,48,47,71,50,55,87,84,66,78,122,50,99,50,120,88,54,65,101,118,112,85,57,75].map(c=>String.fromCharCode(c)).join('');
+      const _IDS={
+        curiosidad:[54,57,57,57,55,100,97,48,100,48,101,97,56,56,49,102,52,48,99,99,48,101,50,98].map(c=>String.fromCharCode(c)).join(''),
+        quiz:      [54,57,57,57,55,100,57,56,97,101,53,57,54,101,55,48,56,102,51,99,55,50,53,52].map(c=>String.fromCharCode(c)).join(''),
+        noticia:   [54,57,57,57,55,100,56,102,100,48,101,97,56,56,49,102,52,48,99,99,48,101,48,56].map(c=>String.fromCharCode(c)).join('')
+      };
+      const _cache={noticia:[],curiosidad:[],quiz:[]};
+
+      async function _fetchBin(tipo){
+        try{
+          const r=await fetch(_B+_IDS[tipo]+"/latest",{headers:{"X-Master-Key":_K,"X-Bin-Meta":"false"}});
+          const d=await r.json();
+          if(Array.isArray(d)) _cache[tipo]=d.filter(x=>x&&typeof x==='object'&&Object.keys(x).length>0);
+          else if(d&&Array.isArray(d.datos)) _cache[tipo]=d.datos.filter(x=>x&&typeof x==='object'&&Object.keys(x).length>0);
+          else if(d&&Array.isArray(d.record)) _cache[tipo]=d.record.filter(x=>x&&typeof x==='object'&&Object.keys(x).length>0);
+          else _cache[tipo]=[];
+        }catch(e){_cache[tipo]=[];}
+      }
+
+      async function _saveBin(tipo,arr){
+        await fetch(_B+_IDS[tipo],{
+          method:"PUT",
+          headers:{"Content-Type":"application/json","X-Master-Key":_K},
+          body:JSON.stringify(arr)
+        });
+        _cache[tipo]=arr;
+      }
+
+      function getData(tipo){return _cache[tipo]||[];}
+      function saveData(tipo,arr){return _saveBin(tipo,arr);}
+      function genId() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2);
+      }
+      function fechaHoy() {
+        return new Date().toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+      }
+
+      // --- Formulario ---
+      window.cambiarFormulario = function () {
+        const tipo = document.getElementById('tipo-contenido').value;
+        document.getElementById('form-noticia').style.display = tipo === 'noticia' ? 'block' : 'none';
+        document.getElementById('form-curiosidad').style.display = tipo === 'curiosidad' ? 'block' : 'none';
+        document.getElementById('form-quiz').style.display = tipo === 'quiz' ? 'block' : 'none';
+      };
+
+      // --- Publicar Noticia ---
+      window.publicarNoticia = async function () {
+        const titulo = document.getElementById('n-titulo').value.trim();
+        const imagen = document.getElementById('n-imagen').value.trim();
+        const texto = document.getElementById('n-texto').value.trim();
+        if (!titulo || !texto) return toast('⚠ TÍTULO Y TEXTO SON OBLIGATORIOS');
+        const arr = getData('noticia');
+        arr.unshift({ id: genId(), titulo, imagen, texto, fecha: fechaHoy() });
+        toast('⏳ PUBLICANDO...'); await saveData('noticia', arr);
+        document.getElementById('n-titulo').value = '';
+        document.getElementById('n-imagen').value = '';
+        document.getElementById('n-texto').value = '';
+        toast('✓ NOTICIA PUBLICADA');
+        if (currentTab === 'noticia') renderAdminList();
+      };
+
+      // --- Publicar Curiosidad ---
+      window.publicarCuriosidad = async function () {
+        const texto = document.getElementById('c-texto').value.trim();
+        if (!texto) return toast('⚠ ESCRIBE ALGO');
+        const arr = getData('curiosidad');
+        arr.unshift({ id: genId(), texto, fecha: fechaHoy() });
+        toast('⏳ PUBLICANDO...'); await saveData('curiosidad', arr);
+        document.getElementById('c-texto').value = '';
+        toast('✓ CURIOSIDAD PUBLICADA');
+        if (currentTab === 'curiosidad') renderAdminList();
+      };
+
+      // --- Publicar Quiz ---
+      window.publicarQuiz = async function () {
+        const pregunta = document.getElementById('q-pregunta').value.trim();
+        const opts = Array.from(document.querySelectorAll('.q-opt')).map(o => o.value.trim());
+        const correctaEl = document.querySelector('input[name="q-correcta"]:checked');
+        if (!pregunta) return toast('⚠ ESCRIBE LA PREGUNTA');
+        if (opts.some(o => !o)) return toast('⚠ RELLENA TODAS LAS OPCIONES');
+        if (!correctaEl) return toast('⚠ MARCA LA OPCIÓN CORRECTA');
+        const correcta = parseInt(correctaEl.value);
+        const arr = getData('quiz');
+        arr.unshift({ id: genId(), pregunta, opciones: opts, correcta, fecha: fechaHoy() });
+        toast('⏳ PUBLICANDO...'); await saveData('quiz', arr);
+        // Reset
+        document.getElementById('q-pregunta').value = '';
+        const cont = document.getElementById('quiz-opciones');
+        cont.innerHTML = `
+          <div class="quiz-opcion-row">
+            <input type="radio" name="q-correcta" value="0" checked />
+            <span class="sep">·</span>
+            <input type="text" class="q-opt" placeholder="Opción 1..." />
+          </div>
+          <div class="quiz-opcion-row">
+            <input type="radio" name="q-correcta" value="1" />
+            <span class="sep">·</span>
+            <input type="text" class="q-opt" placeholder="Opción 2..." />
+          </div>`;
+        document.getElementById('btn-add-opcion').style.display = '';
+        toast('✓ QUIZ PUBLICADO');
+        if (currentTab === 'quiz') renderAdminList();
+      };
+
+      // --- Añadir opción quiz (máx 5) ---
+      window.addOpcion = function () {
+        const cont = document.getElementById('quiz-opciones');
+        const i = cont.children.length;
+        if (i >= 5) return toast('⚠ MÁXIMO 5 OPCIONES');
+        const row = document.createElement('div');
+        row.className = 'quiz-opcion-row';
+        row.innerHTML = `<input type="radio" name="q-correcta" value="${i}" /><span class="sep">·</span><input type="text" class="q-opt" placeholder="Opción ${i + 1}..." />`;
+        cont.appendChild(row);
+        if (cont.children.length >= 5) {
+          document.getElementById('btn-add-opcion').style.display = 'none';
+        }
+      };
+
+      // --- Tabs ---
+      let currentTab = 'noticia';
+      window.switchAdminTab = function (tipo, btn) {
+        currentTab = tipo;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderAdminList();
+      };
+
+      // --- Render lista admin ---
+      function renderAdminList() {
+        const list = document.getElementById('admin-list');
+        const arr = getData(currentTab);
+        if (!arr.length) {
+          list.innerHTML = '<p style="font-size:7px;color:#555;text-align:center;padding:20px;">No hay contenido publicado.</p>';
+          return;
+        }
+        list.innerHTML = '';
+        arr.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'admin-post-item';
+          let label = item.titulo || item.pregunta || (item.texto && item.texto.length > 40 ? item.texto.substring(0, 40) + '...' : item.texto);
+          div.innerHTML = `
+            <div>
+              <h4>${esc(label)}</h4>
+              <span>${item.fecha}</span>
+            </div>
+            <button class="btn-delete" onclick="borrarItem('${item.id}')">ELIMINAR</button>`;
+          list.appendChild(div);
+        });
+      }
+
+      // --- Borrar item ---
+      window.borrarItem = async function (id) {
+        if (!confirm('¿CONFIRMAR ELIMINACIÓN?')) return;
+        let arr = getData(currentTab).filter(x => x.id !== id);
+        toast('⏳ ELIMINANDO...'); await saveData(currentTab, arr);
+        renderAdminList();
+        toast('✓ ELIMINADO');
+      };
+
+      // --- Cerrar sesión ---
+      window.cerrarSesion = function () {
+        localStorage.removeItem(ADMIN_KEY);
+        window.location.href = 'index.html';
+      };
+
+      // --- Inicializar ---
+      if (localStorage.getItem(ADMIN_KEY) !== ADMIN_VAL) {
+        document.getElementById('access-denied').style.display = 'flex';
+      } else {
+        document.getElementById('admin-panel').style.display = 'block';
+        cambiarFormulario();
+        Promise.all([_fetchBin('noticia'),_fetchBin('curiosidad'),_fetchBin('quiz')]).then(()=>renderAdminList());
+      }
+
+    })();
+  </script>
+</body>
+</html>
