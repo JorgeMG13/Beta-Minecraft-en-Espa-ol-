@@ -339,20 +339,29 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VzcW95d2FoaWV1YXBmdG1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODM1OTksImV4cCI6MjA4NzI1OTU5OX0.b_LmSnX_CGjL2YU5-JHqh14qHfv8NM9WNeMv5scZBpY';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    
+
     async function registrarVisita() {
-  const { data } = await sb
-    .from('visitas')
-    .select('conut')
-    .eq('id', 1)
-    .single();
+      const hoy = new Date().toISOString().split('T')[0];
+      const ultimaVisita = localStorage.getItem('ultimaVisita');
 
-  await sb
-    .from('visitas')
-    .update({ conut: data.conut + 1 })
-    .eq('id', 1);
-}
+      if (ultimaVisita !== hoy) {
+        localStorage.setItem('ultimaVisita', hoy);
 
-registrarVisita();
+        const { data } = await sb
+          .from('visitas')
+          .select('conut')
+          .eq('id', 1)
+          .single();
+
+        await sb
+          .from('visitas')
+          .update({ conut: data.conut + 1 })
+          .eq('id', 1);
+      }
+    }
+
+    registrarVisita();
 
     const _cache={noticia:[],curiosidad:[],quiz:[],otros:[]};
     async function _fetchBin(tipo){
