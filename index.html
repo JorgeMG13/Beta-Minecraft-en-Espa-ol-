@@ -239,6 +239,7 @@
     <button class="pixel-btn" id="nav-noticias" onclick="showSection('noticias', this)">📰 ÚLTIMAS NOTICIAS</button>
     <button class="pixel-btn" id="nav-curiosidades" onclick="showSection('curiosidades', this)">💡 DATOS CURIOSOS</button>
     <button class="pixel-btn" id="nav-quiz" onclick="showSection('quiz', this)">❓ QUIZ</button>
+    <button class="pixel-btn" id="nav-otros" onclick="showSection('otros', this)">🎭 OTROS</button>
   </nav>
 
   <div class="creeper-container">
@@ -301,7 +302,7 @@
     <div id="quiz-list" class="posts-grid"></div>
   </section>
 
-  <!-- ===== OTROS (SECRETO) ===== -->
+  <!-- ===== OTROS ===== -->
   <section id="otros" class="section">
     <p class="section-title">🎭 OTROS</p>
     <div id="otros-list" class="posts-grid"></div>
@@ -474,18 +475,29 @@
 
     function buildQuizCard(q){
       const opciones=Array.isArray(q.opciones)?q.opciones:JSON.parse(q.opciones);
-      const opts=opciones.map((op,i)=>`
-        <div class="quiz-option" id="opt-${q.id}-${i}" onclick="responderQuiz('${q.id}',${i})">${esc(op)}</div>`).join("");
+      const guardada=localStorage.getItem(`quiz_${q.id}`);
+      const opts=opciones.map((op,i)=>{
+        let clase="";
+        if(guardada!==null){
+          const elegida=parseInt(guardada);
+          if(i===q.correcta)clase=elegida===i?"correcta":"revelar";
+          else if(i===elegida)clase="incorrecta";
+        }
+        const click=guardada===null?`onclick="responderQuiz('${q.id}',${i})"`:"";
+        return `<div class="quiz-option ${clase}" id="opt-${q.id}-${i}" ${click} style="${guardada!==null?'cursor:default':''}">${esc(op)}</div>`;
+      }).join("");
+      const resultado=guardada!==null?(parseInt(guardada)===q.correcta?'<span style="color:#4fc800;">✔ ¡CORRECTO!</span>':`<span style="color:#c82828;">✘ INCORRECTO.</span> <span style="color:#aaa;">La correcta era: ${esc(opciones[q.correcta])}</span>`):"";
       return `<div class="quiz-card">
         <p class="quiz-pregunta">${esc(q.pregunta)}</p>
         ${opts}
-        <div class="quiz-resultado" id="res-${q.id}"></div>
+        <div class="quiz-resultado" id="res-${q.id}">${resultado}</div>
       </div>`;
     }
 
     function responderQuiz(qid,elegida){
       const q=getDatos("quiz").find(x=>x.id===qid);
       if(!q)return;
+      localStorage.setItem(`quiz_${qid}`, elegida);
       const opciones=Array.isArray(q.opciones)?q.opciones:JSON.parse(q.opciones);
       opciones.forEach((_,i)=>{
         const el=document.getElementById("opt-"+qid+"-"+i);
