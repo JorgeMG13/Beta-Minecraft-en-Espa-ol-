@@ -286,6 +286,33 @@
       <button class="badge badge-btn" onclick="showSection('otros', null)">🏗️ Construcción</button>
     <br><br>
       </div>
+    <div style="text-align:center; margin-bottom:20px;">
+      <button class="pixel-btn" onclick="abrirContacto()">✉️ CONTACTAR</button>
+    </div>
+
+    <!-- PANEL CONTACTO -->
+    <div id="contacto-panel" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#0a0400; border:2px solid #4fc800; padding:30px; max-width:420px; width:90%; font-family:'Press Start 2P',monospace; color:#fff; font-size:7px; line-height:2;">
+        <div style="color:#4fc800; font-size:10px; margin-bottom:20px;">✉️ ENVIAR MENSAJE</div>
+
+        <label style="display:block; color:#ffdd00; margin-bottom:6px;">NOMBRE (opcional)</label>
+        <input id="contacto-nombre" type="text" placeholder="Tu nombre..."
+          style="width:100%; background:#111; border:2px solid #555; color:#fff; padding:8px; font-family:'Press Start 2P',monospace; font-size:7px; margin-bottom:14px; box-sizing:border-box;">
+
+        <label style="display:block; color:#ffdd00; margin-bottom:6px;">EMAIL (opcional)</label>
+        <input id="contacto-email" type="email" placeholder="tu@email.com"
+          style="width:100%; background:#111; border:2px solid #555; color:#fff; padding:8px; font-family:'Press Start 2P',monospace; font-size:7px; margin-bottom:14px; box-sizing:border-box;">
+
+        <label style="display:block; color:#ffdd00; margin-bottom:6px;">MENSAJE *</label>
+        <textarea id="contacto-mensaje" rows="4" placeholder="Escribe tu mensaje..."
+          style="width:100%; background:#111; border:2px solid #555; color:#fff; padding:8px; font-family:'Press Start 2P',monospace; font-size:7px; margin-bottom:14px; box-sizing:border-box; resize:vertical;"></textarea>
+
+        <div id="contacto-aviso" style="min-height:18px; margin-bottom:10px; color:#4fc800;"></div>
+
+        <button class="pixel-btn" onclick="enviarContacto()" style="width:100%; margin-bottom:10px;">📨 ENVIAR</button>
+        <button class="pixel-btn" onclick="cerrarContacto()" style="width:100%; background:#3d0000; border-top-color:#c82828; border-left-color:#c82828; border-bottom-color:#1a0000; border-right-color:#1a0000;">✕ CERRAR</button>
+      </div>
+    </div>
       <div style="text-align:center; margin-bottom:28px;">
         <button class="pixel-btn" onclick="abrirInstalar()">📲 INSTALAR APP</button>
       </div>
@@ -399,17 +426,15 @@
     registrarVisita();
 
     const _cache={noticia:[],curiosidad:[],quiz:[],otros:[]};
-    async function _fetchBin(tipo){
-      const tabla = tipo === 'noticia' ? 'noticias' : tipo === 'curiosidad' ? 'curiosidades' : tipo === 'quiz' ? 'quiz' : 'otros';
-     
-      try {
-        const { data } = await sb.from(tabla).select('*').order('created_at', { ascending: false });
-        _cache[tipo] = data || [];
-      } catch(e) { _cache[tipo] = []; }
+    async function registrarVisita() {
+      const clave = localStorage.getItem('visita_uid') || (() => {
+        const uid = crypto.randomUUID();
+        localStorage.setItem('visita_uid', uid);
+        return uid;
+      })();
+
+      await sb.rpc('registrar_visita', { p_clave: clave });
     }
-    function getDatos(t){return _cache[t]||[];}
-    function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
-    function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
     // ============================================================
     //  NAVEGACIÓN
@@ -576,7 +601,38 @@ function abrirCuriosidad(id){
           `<span style="color:#c82828;">✘ INCORRECTO.</span> <span style="color:#aaa;">La correcta era: ${esc(opciones[q.correcta])}</span>`;
       }
     }
+    function abrirContacto(){
+      document.getElementById('contacto-nombre').value='';
+      document.getElementById('contacto-email').value='';
+      document.getElementById('contacto-mensaje').value='';
+      document.getElementById('contacto-aviso').textContent='';
+      const p=document.getElementById('contacto-panel');
+      p.style.cssText='display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center;';
+    }
 
+    function cerrarContacto(){
+      document.getElementById('contacto-panel').style.display='none';
+    }
+
+    async function enviarContacto(){
+      const nombre=document.getElementById('contacto-nombre').value.trim();
+      const email=document.getElementById('contacto-email').value.trim();
+      const mensaje=document.getElementById('contacto-mensaje').value.trim();
+      const aviso=document.getElementById('contacto-aviso');
+
+      if(!mensaje){ aviso.style.color='#c82828'; aviso.textContent='⚠ El mensaje es obligatorio.'; return; }
+
+      aviso.style.color='#ffdd00'; aviso.textContent='Enviando...';
+
+      const { error } = await sb.from('mensajes').insert([{
+        nombre: nombre || 'Anónimo',
+        email: email || null,
+        mensaje
+      }]);
+
+        if(error){ aviso.style.color='#c82828'; aviso.textContent='❌ Error al enviar. Inténtalo de nuevo.'; }
+      else { aviso.style.color='#4fc800'; aviso.textContent='✔ Mensaje enviado. ¡Gracias!'; setTimeout(cerrarContacto, 2000); }
+    }
 
 
 
