@@ -27,12 +27,22 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    .section.active {
+      flex: 1;
+    }
+
     body {
       font-family: "Press Start 2P", monospace;
       background-color: var(--green-mid);
       min-height: 100vh;
       overflow-x: hidden;
       image-rendering: pixelated;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .grass-bottom {
+      margin-top: auto;
     }
 
     body::before {
