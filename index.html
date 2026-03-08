@@ -426,6 +426,7 @@
     registrarVisita();
 
     const _cache={noticia:[],curiosidad:[],quiz:[],otros:[]};
+   
     async function registrarVisita() {
       const clave = localStorage.getItem('visita_uid') || (() => {
         const uid = crypto.randomUUID();
@@ -435,6 +436,19 @@
 
       await sb.rpc('registrar_visita', { p_clave: clave });
     }
+
+    async function _fetchBin(tipo){
+      const tabla = tipo === 'noticia' ? 'noticias' : tipo === 'curiosidad' ? 'curiosidades' : tipo === 'quiz' ? 'quiz' : 'otros';
+
+      try {
+        const { data } = await sb.from(tabla).select('*').order('created_at', { ascending: false });
+        _cache[tipo] = data || [];
+      } catch(e) { _cache[tipo] = []; }
+    }
+    function getDatos(t){return _cache[t]||[];}
+    function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+    function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
 
     // ============================================================
     //  NAVEGACIÓN
