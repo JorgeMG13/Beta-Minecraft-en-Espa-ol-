@@ -426,14 +426,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 </div></div>
 
 <script>
-// ── SESSION RESTORE ───────────────────────────────────────
-(async()=>{
-  try{
-    const u=await DB.getSession();
-    if(u)await loadDash(u);
-  }catch(e){console.error('Session restore failed:',e);}
-})();
-
 // ── UTILS ──────────────────────────────────────────────────
 function Q(s){return document.querySelector(s);}
 function QI(id){return document.getElementById(id);}
@@ -1299,10 +1291,10 @@ document.addEventListener('keydown',e=>{
 // ── MONACO ────────────────────────────────────────────────
 // Expose all needed functions to window (called from HTML onclick attributes)
 
-// Restore session on page load
+// ── SESSION RESTORE ───────────────────────────────────────
 supa.auth.getSession().then(({data:{session}})=>{
   if(session){SUPA_SESSION=session;loadDash(session.user);}
-});
+}).catch(e=>console.error('Session restore failed:',e));
 
 require.config({paths:{vs:'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'}});
 require(['vs/editor/editor.main'],function(){
