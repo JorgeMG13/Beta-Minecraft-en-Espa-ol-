@@ -429,10 +429,100 @@ function Q(s){return document.querySelector(s);}
 function QI(id){return document.getElementById(id);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ── STORAGE ────────────────────────────────────────────────
+// ── SUPABASE REST CLIENT (no SDK needed) ───────────────────
 const SUPA_URL='https://fcckpjarbxyjisayzhdw.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY2twamFyYnh5amlzYXl6aGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTI2NjYsImV4cCI6MjA4OTQ4ODY2Nn0.UaxXBZw9M3Tyb9gfwl5LeE_wg8k3fuju9gRT5TE0kns';
-let supa=null;
+let _token=null, _uid=null, _refreshToken=null;
+
+// Save/load session from localStorage
+function _saveSession(access,refresh,uid){
+  _token=access;_uid=uid;_refreshToken=refresh;
+  localStorage.setItem('cs_session',JSON.stringify({access,refresh,uid}));
+}
+function _loadSession(){
+  try{const s=localStorage.getItem('cs_session');if(s){const j=JSON.parse(s);_token=j.access;_uid=j.uid;_refreshToken=j.refresh;return j;}return null;}catch{return null;}
+}
+function _clearSession(){_token=null;_uid=null;_refreshToken=null;localStorage.removeItem('cs_session');}
+
+async function _authPost(path,body){
+  const r=await fetch(SUPA_URL+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify(body)});
+  const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||j.message||'Auth error');return j;
+}
+async function _dbReq(method,path,body){
+  const headers={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(_token||SUPA_KEY)};
+  if(method==='GET'||method==='DELETE') headers['Accept']='application/json';
+  if(method==='POST'||method==='PATCH') headers['Prefer']='return=minimal';
+  const opts={method,headers};if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(SUPA_URL+path,opts);
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  if(r.status===204||r.headers.get('content-length')==='0')return[];
+  return r.json();
+}
+
+const supa={
+  auth:{
+    async signUp({email,password,options}){
+      const j=await _authPost('/auth/v1/signup',{email,password,data:options?.data||{}});
+      if(j.access_token){_saveSession(j.access_token,j.refresh_token,j.user.id);return{data:{user:j.user,session:j},error:null};}
+      return{data:{user:j.user||null},error:null};
+    },
+    async signInWithPassword({email,password}){
+      const j=await _authPost('/auth/v1/token?grant_type=password',{email,password});
+      _saveSession(j.access_token,j.refresh_token,j.user.id);
+      return{data:{user:j.user,session:j},error:null};
+    },
+    async signOut(){_clearSession();return{error:null};},
+    async getSession(){
+      const s=_loadSession();
+      if(!s)return{data:{session:null}};
+      // Try to refresh token
+      try{
+        const j=await _authPost('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.refresh});
+        _saveSession(j.access_token,j.refresh_token,j.user.id);
+        return{data:{session:{user:j.user}}};
+      }catch{_clearSession();return{data:{session:null}};}
+    }
+  },
+  from(table){
+    return{
+      async select(cols='*'){
+        return{data:await _dbReq('GET',`/rest/v1/${table}?select=${cols}`),error:null};
+      },
+      eq(col,val){
+        this._filters=(this._filters||[]); this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this;
+      },
+      order(col,{ascending=true}={}){
+        this._order=`${col}.${ascending?'asc':'desc'}`; return this;
+      },
+      async _exec(method,body){
+        let path=`/rest/v1/${table}`;
+        const params=[];
+        if(this._filters)params.push(...this._filters);
+        if(this._order)params.push('order='+this._order);
+        if(params.length)path+='?'+params.join('&');
+        return _dbReq(method,path,body);
+      },
+      async upsert(row,opts){
+        const r=await fetch(SUPA_URL+`/rest/v1/${table}`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(_token||SUPA_KEY),'Prefer':'resolution=merge-duplicates,return=minimal'},
+          body:JSON.stringify(row)
+        });
+        if(!r.ok){const t=await r.text();throw new Error(t);}
+        return{error:null};
+      },
+      async delete(){
+        const self=this;
+        return{eq:function(col,val){
+          self._filters=(self._filters||[]);self._filters.push(`${col}=eq.${encodeURIComponent(val)}`);
+          return{async then(res){
+            try{await self._exec('DELETE');res({error:null});}catch(e){res({error:e});}
+          }};
+        }};
+      }
+    };
+  }
+};
 
 // ── STATE ──────────────────────────────────────────────────
 let CU=null,projs=[],AP=null,SUPA_SESSION=null; // current user, projects, active project
@@ -522,8 +612,10 @@ async function doLogout(){
 // ── DASHBOARD ──────────────────────────────────────────────
 async function loadDash(u){
   CU=u;
-  const {data,error}=await supa.from('projects').select('*').eq('user_id',u.id).order('updated_at',{ascending:false});
-  projs=error?[]:(data||[]).map(r=>({id:r.id,name:r.name,desc:r.description,files:r.files||{},_notes:r.notes,_todos:r.todos||[],updated:new Date(r.updated_at).getTime(),user_id:r.user_id}));
+  try{
+    const data=await _dbReq('GET',`/rest/v1/projects?user_id=eq.${u.id}&order=updated_at.desc`);
+    projs=(data||[]).map(r=>({id:r.id,name:r.name,desc:r.description,files:r.files||{},_notes:r.notes,_todos:r.todos||[],updated:new Date(r.updated_at).getTime(),user_id:r.user_id}));
+  }catch(e){console.error('loadDash error:',e);projs=[];}
   const uname=u.user_metadata?.username||u.email.split('@')[0];
   QI('nav-av').textContent=uname[0].toUpperCase();
   QI('nav-un').textContent=uname;
@@ -569,12 +661,13 @@ function mkProj(name,desc,tpl){
 }
 
 async function saveProj(p){
-  await supa.from('projects').upsert({
-    id:p.id, user_id:p.user_id||CU.id,
-    name:p.name, description:p.desc||'',
-    files:p.files||{}, notes:p._notes||'',
-    todos:p._todos||[], updated_at:new Date().toISOString()
+  const row={id:p.id,user_id:p.user_id||CU?.id,name:p.name,description:p.desc||'',files:p.files||{},notes:p._notes||'',todos:p._todos||[],updated_at:new Date().toISOString()};
+  const r=await fetch(SUPA_URL+'/rest/v1/projects',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(_token||SUPA_KEY),'Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(row)
   });
+  if(!r.ok){const t=await r.text();console.error('saveProj error:',t);}
 }
 
 async function createProject(){
@@ -605,7 +698,7 @@ function ctxPDelete(){
   QI('proj-ctx').classList.remove('on');
   const p=projs.find(x=>x.id===ctxPid);if(!p)return;
   askConfirm('Delete project?',`Delete <strong>${esc(p.name)}</strong> and all its files? This cannot be undone.`,async()=>{
-    await supa.from('projects').delete().eq('id',ctxPid);
+    await _dbReq('DELETE',`/rest/v1/projects?id=eq.${ctxPid}`);
     projs=projs.filter(x=>x.id!==ctxPid);renderProjs();
   });
 }
@@ -1289,19 +1382,10 @@ document.addEventListener('keydown',e=>{
 // ── MONACO ────────────────────────────────────────────────
 // Expose all needed functions to window (called from HTML onclick attributes)
 
-// ── LOAD SUPABASE & RESTORE SESSION ───────────────────────
-(function(){
-  const s=document.createElement('script');
-  s.src='https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js';
-  s.onload=function(){
-    supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
-    supa.auth.getSession().then(({data:{session}})=>{
-      if(session){SUPA_SESSION=session;loadDash(session.user);}
-    }).catch(e=>console.error('Session restore failed:',e));
-  };
-  s.onerror=function(){console.error('Failed to load Supabase SDK');};
-  document.head.appendChild(s);
-})();
+// ── SESSION RESTORE ───────────────────────────────────────
+supa.auth.getSession().then(({data:{session}})=>{
+  if(session&&session.user){SUPA_SESSION=session;loadDash(session.user);}
+}).catch(e=>console.error('Session restore failed:',e));
 
 require.config({paths:{vs:'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'}});
 require(['vs/editor/editor.main'],function(){
