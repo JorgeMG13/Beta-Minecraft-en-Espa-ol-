@@ -6,7 +6,6 @@
 <title>CodeSpace</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <style>
 :root{
   --bg0:#0b0d10;--bg1:#11141a;--bg2:#171b22;--bg3:#1e232d;--bg4:#252c38;
@@ -433,7 +432,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 // ── STORAGE ────────────────────────────────────────────────
 const SUPA_URL='https://fcckpjarbxyjisayzhdw.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY2twamFyYnh5amlzYXl6aGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTI2NjYsImV4cCI6MjA4OTQ4ODY2Nn0.UaxXBZw9M3Tyb9gfwl5LeE_wg8k3fuju9gRT5TE0kns';
-const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+let supa=null;
 
 // ── STATE ──────────────────────────────────────────────────
 let CU=null,projs=[],AP=null,SUPA_SESSION=null; // current user, projects, active project
@@ -1290,10 +1289,19 @@ document.addEventListener('keydown',e=>{
 // ── MONACO ────────────────────────────────────────────────
 // Expose all needed functions to window (called from HTML onclick attributes)
 
-// ── SESSION RESTORE ───────────────────────────────────────
-supa.auth.getSession().then(({data:{session}})=>{
-  if(session){SUPA_SESSION=session;loadDash(session.user);}
-}).catch(e=>console.error('Session restore failed:',e));
+// ── LOAD SUPABASE & RESTORE SESSION ───────────────────────
+(function(){
+  const s=document.createElement('script');
+  s.src='https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js';
+  s.onload=function(){
+    supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+    supa.auth.getSession().then(({data:{session}})=>{
+      if(session){SUPA_SESSION=session;loadDash(session.user);}
+    }).catch(e=>console.error('Session restore failed:',e));
+  };
+  s.onerror=function(){console.error('Failed to load Supabase SDK');};
+  document.head.appendChild(s);
+})();
 
 require.config({paths:{vs:'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'}});
 require(['vs/editor/editor.main'],function(){
