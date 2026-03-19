@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg0:#0b0d10;--bg1:#11141a;--bg2:#171b22;--bg3:#1e232d;--bg4:#252c38;
@@ -425,7 +426,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 </div></div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+// ── SESSION RESTORE ───────────────────────────────────────
+(async()=>{
+  try{
+    const u=await DB.getSession();
+    if(u)await loadDash(u);
+  }catch(e){console.error('Session restore failed:',e);}
+})();
+
 // ── UTILS ──────────────────────────────────────────────────
 function Q(s){return document.querySelector(s);}
 function QI(id){return document.getElementById(id);}
@@ -1290,21 +1298,6 @@ document.addEventListener('keydown',e=>{
 
 // ── MONACO ────────────────────────────────────────────────
 // Expose all needed functions to window (called from HTML onclick attributes)
-const EXPOSE=['switchSeg','doLogin','doRegister','doLogout','openModal','closeModal',
-  'toggleCtx','showPCtx','ctxPOpen','ctxPEdit','confirmEditProj','ctxPDelete',
-  'runConfirm','openProj','backToDash','saveProject','runCode','formatCode',
-  'toggleSidebar','toggleNTMenu','openEdTab','openToolTab','closeTab','activateTab',
-  'showFCtx','ctxFRename','confirmRenameFile','ctxFDuplicate','ctxFDownload','ctxFDelete',
-  'createFile','uploadFiles','createProject',
-  'addTodo','toggleTodo','delTodo','renderTodos',
-  'updateColor','colorHex','cpCopy',
-  'runRx','fmtJSON','minJSON','valJSON',
-  'b6Enc','b6Dec','b6Copy','renderMD',
-  'timerToggle','timerReset','timerSetCd','timerLap',
-  'doSearch','renderDiff','renderPreview','jumpTo',
-  'closeNTMenu','setStatus','autoSave',
-];
-EXPOSE.forEach(fn=>{ if(typeof eval(fn)==='function') window[fn]=eval(fn); });
 
 // Restore session on page load
 supa.auth.getSession().then(({data:{session}})=>{
@@ -1332,7 +1325,6 @@ require(['vs/editor/editor.main'],function(){
   pendingME.forEach(({id,fn,el})=>{if(AP?.files[fn])initME(id,fn,el);});
   pendingME=[];
 });
-}); // end DOMContentLoaded
 </script>
 </body>
 </html>
