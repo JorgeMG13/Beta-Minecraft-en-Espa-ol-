@@ -64,7 +64,8 @@
       display: flex; align-items: center; justify-content: center; gap: 14px; overflow: hidden;
     }
     .header-brand .logo-complex {
-  width: clamp(70px, 10vw, 175px);
+  width: clamp(48px, 10vw, 175px);
+  max-width: 80px;
   height: auto;
   flex-shrink: 0;
   filter: drop-shadow(0 0 5px rgba(79,200,0,0.5));
@@ -406,6 +407,36 @@
     ::-webkit-scrollbar-thumb { background: #2a3d20; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #3a5a2a; }
 
+    /* ── NOTIF BTN ── */
+    #notif-btn {
+      position: fixed; bottom: 24px; right: 20px; z-index: 500;
+      background: var(--green); color: #071400;
+      font-family: var(--pixel); font-size: 7px; letter-spacing: 1px;
+      border: none; border-radius: var(--radius);
+      padding: 10px 14px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(79,200,0,0.4);
+      display: flex; align-items: center; gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #notif-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,200,0,0.55); }
+    #notif-btn.off { background: var(--surface2); color: var(--txt-muted); box-shadow: none; border: 1px solid var(--border); }
+
+    /* ── TOAST ── */
+    #notif-toast {
+      position: fixed; top: 80px; right: 20px; z-index: 600;
+      background: var(--surface); border: 1px solid var(--border-em);
+      border-left: 3px solid var(--green);
+      border-radius: var(--radius); padding: 14px 18px;
+      max-width: 320px; width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      display: none; animation: toastIn 0.3s ease;
+    }
+    #notif-toast.show { display: block; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);} }
+    #notif-toast .toast-tag { font-family: var(--pixel); font-size: 6px; color: var(--green); letter-spacing: 1px; }
+    #notif-toast .toast-title { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--txt); margin: 6px 0 4px; }
+    #notif-toast .toast-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--txt-muted); cursor: pointer; font-size: 14px; }
+
     /* ── MÓVIL ── */
     @media(max-width:640px) {
       .hamburger { display: flex; }
@@ -415,6 +446,9 @@
       .hero-kicker { font-size: 6px; letter-spacing: 1px; }
       .hero { padding: 36px 16px 36px; }
       .fs-content { padding: 24px 16px 60px; }
+      .header-brand .logo-complex { max-width: 52px !important; filter: drop-shadow(0 0 5px rgba(79,200,0,0.5)); padding: 4px; box-sizing: content-box; }
+      .header-brand .site-logo { max-width: 200px !important; }
+      .header-brand { gap: 8px; }
     }
   </style>
 </head>
@@ -514,6 +548,9 @@
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding-bottom:8px;margin-top:24px;">
         <button class="btn btn-outline" onclick="abrirContacto()">✉️ Contactar</button>
         <button class="btn btn-outline" onclick="abrirInstalar()">📲 Instalar App</button>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:10px;">
+        <button id="desactivar-notif-btn" class="btn btn-outline" style="display:none;border-color:rgba(232,53,53,0.4);color:var(--red);" onclick="desactivarNotificaciones()">🔕 Desactivar Notif.</button>
       </div>
     </section>
 
@@ -653,6 +690,18 @@
     </div>
   </div>
 
+  <!-- BOTÓN NOTIFICACIONES -->
+  <button id="notif-btn" onclick="toggleNotificaciones()" title="Activar notificaciones">
+    🔔 NOTIFICACIONES
+  </button>
+
+  <!-- TOAST nueva publicación -->
+  <div id="notif-toast" role="alert">
+    <button class="toast-close" onclick="cerrarToast()">✕</button>
+    <div class="toast-tag" id="toast-tag">NUEVA PUBLICACIÓN</div>
+    <div class="toast-title" id="toast-title"></div>
+  </div>
+
   <div class="pixel-strip-bottom"></div>
   <footer>© 2026 MINECRAFT EN ESPAÑOL · HECHO CON BLOQUES PARA VOSOTROS</footer>
 
@@ -671,7 +720,9 @@
       _searchIndex = [];
       _cache.noticia.forEach(n => _searchIndex.push({ tipo:'NOTICIA', titulo:n.titulo, excerpt:n.texto?.slice(0,80), action:()=>abrirNoticia(n.id) }));
       _cache.guias.forEach(g => _searchIndex.push({ tipo:'GUÍA', titulo:g.titulo, excerpt:g.categoria, action:()=>{ showSection('guias',document.getElementById('nav-guias')); setTimeout(()=>abrirGuia(g.id),100); } }));
-      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:'', action:()=>abrirCuriosidad(c.id) }));
+      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:c.texto, action:()=>abrirCuriosidad(c.id) }));
+      _cache.otros.forEach(o => _searchIndex.push({ tipo:'OTROS', titulo:o.titulo, excerpt:o.texto, action:()=>{ showSection('otros',document.getElementById('nav-otros')); setTimeout(()=>abrirOtros(o.id),100); } }));
+      _cache.quiz.forEach(q => { const opciones=Array.isArray(q.opciones)?q.opciones:JSON.parse(q.opciones||'[]'); _searchIndex.push({ tipo:'QUIZ', titulo:q.pregunta, excerpt:opciones.join(' · '), action:()=>showSection('quiz',document.getElementById('nav-quiz')) }); });
     }
     document.getElementById('global-search').addEventListener('input', function() {
       const q = this.value.trim().toLowerCase();
@@ -903,7 +954,144 @@
       await Promise.all([_fetchBin('noticia'),_fetchBin('curiosidad'),_fetchBin('quiz'),_fetchBin('otros'),_fetchBin('guias')]);
       buildSearchIndex();
       renderTodo();
+      initNotificaciones();
+      iniciarRealtime();
     })();
+
+    /* ══ SERVICE WORKER + NOTIFICACIONES PUSH ══ */
+    let _swReg = null;
+
+    async function initNotificaciones() {
+      if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        document.getElementById('notif-btn').style.display = 'none';
+        return;
+      }
+      try {
+        _swReg = await navigator.serviceWorker.register('/sw.js');
+      } catch(e) { console.warn('SW no registrado:', e); }
+
+      actualizarBtnNotif();
+    }
+
+    function actualizarBtnNotif() {
+      const btn = document.getElementById('notif-btn');
+      const desBtn = document.getElementById('desactivar-notif-btn');
+      const perm = Notification.permission;
+      if (perm === 'granted') {
+        btn.style.display = 'none';
+        if (desBtn) desBtn.style.display = 'inline-flex';
+      } else if (perm === 'denied') {
+        btn.innerHTML = '🔕 BLOQUEADAS';
+        btn.classList.add('off');
+        btn.style.display = '';
+        if (desBtn) desBtn.style.display = 'none';
+      } else {
+        btn.innerHTML = '🔔 ACTIVAR NOTIF.';
+        btn.classList.remove('off');
+        btn.style.display = '';
+        if (desBtn) desBtn.style.display = 'none';
+      }
+    }
+
+    function desactivarNotificaciones() {
+      alert('Para desactivar las notificaciones, ve a los ajustes de tu navegador y bloquea los permisos de notificación para este sitio.');
+    }
+
+    async function toggleNotificaciones() {
+      if (!('Notification' in window)) {
+        alert('Tu navegador no soporta notificaciones.');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('Las notificaciones están bloqueadas. Actívalas desde los ajustes del navegador.');
+        return;
+      }
+
+      // Detectar iOS
+      const esIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const esStandalone = window.navigator.standalone === true;
+
+      if (esIOS && !esStandalone) {
+        const confirmar = confirm(
+          '⚠️ AVISO PARA IPHONE / IPAD\n\n' +
+          'En iOS las notificaciones push solo funcionan si añades esta web a tu pantalla de inicio.\n\n' +
+          '1. Pulsa el botón compartir ⬆ en Safari\n' +
+          '2. "Añadir a pantalla de inicio"\n' +
+          '3. Abre la app instalada\n' +
+          '4. Activa las notificaciones desde ahí\n\n' +
+          '¿Quieres continuar igualmente?'
+        );
+        if (!confirmar) return;
+      }
+
+      const perm = await Notification.requestPermission();
+      actualizarBtnNotif();
+      if (perm === 'granted') {
+        enviarNotifLocal('🟢 ¡Notificaciones activadas!', 'Te avisaremos cuando haya nuevas publicaciones.');
+      }
+    }
+
+    function enviarNotifLocal(titulo, cuerpo, tag) {
+      if (Notification.permission !== 'granted') return;
+      if (_swReg) {
+        _swReg.active?.postMessage({ type: 'SHOW_NOTIFICATION', title: titulo, body: cuerpo, tag: tag || 'mc-notif' });
+      } else {
+        new Notification(titulo, { body: cuerpo, icon: '/favicon-96x96.png' });
+      }
+    }
+
+    /* ══ SUPABASE REALTIME ══ */
+    // Guarda el ID del último elemento de cada tabla para detectar nuevos
+    const _ultimosIds = { noticias: null, guias: null, curiosidades: null, otros: null };
+
+    function iniciarRealtime() {
+      // Guardar los IDs actuales como referencia
+      if (_cache.noticia.length)    _ultimosIds.noticias      = _cache.noticia[0].id;
+      if (_cache.guias.length)      _ultimosIds.guias          = _cache.guias[0].id;
+      if (_cache.curiosidad.length) _ultimosIds.curiosidades   = _cache.curiosidad[0].id;
+      if (_cache.otros.length)      _ultimosIds.otros           = _cache.otros[0].id;
+
+      const tablas = [
+        { tabla: 'noticias',      tipo: 'noticia',    emoji: '📰', label: 'Nueva noticia' },
+        { tabla: 'guias',         tipo: 'guias',      emoji: '📖', label: 'Nueva guía' },
+        { tabla: 'curiosidades',  tipo: 'curiosidad', emoji: '💡', label: 'Nuevo dato curioso' },
+        { tabla: 'otros',         tipo: 'otros',      emoji: '🎭', label: 'Nuevo contenido' },
+      ];
+
+      tablas.forEach(({ tabla, tipo, emoji, label }) => {
+        sb.channel('realtime:' + tabla)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: tabla }, async (payload) => {
+            const nuevo = payload.new;
+            // Actualizar cache
+            _cache[tipo] = [nuevo, ..._cache[tipo]];
+            buildSearchIndex();
+            renderTodo();
+
+            const titulo = nuevo.titulo || nuevo.texto?.slice(0, 60) || label;
+
+            // Toast en pantalla
+            mostrarToast(emoji + ' ' + label.toUpperCase(), titulo);
+
+            // Notificación push nativa
+            enviarNotifLocal(emoji + ' Minecraft en Español', titulo, tabla);
+          })
+          .subscribe();
+      });
+    }
+
+    function mostrarToast(tag, titulo) {
+      document.getElementById('toast-tag').textContent = tag;
+      document.getElementById('toast-title').textContent = titulo;
+      const t = document.getElementById('notif-toast');
+      t.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(cerrarToast, 6000);
+    }
+
+    function cerrarToast() {
+      document.getElementById('notif-toast').classList.remove('show');
+    }
   </script>
 </body>
 </html>
