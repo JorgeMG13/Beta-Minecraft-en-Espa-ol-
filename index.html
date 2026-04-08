@@ -971,6 +971,9 @@
       } catch(e) { console.warn('SW no registrado:', e); }
 
       actualizarBtnNotif();
+      if (Notification.permission === 'granted') {
+        await suscribirPush();
+      }
     }
 
     function actualizarBtnNotif() {
