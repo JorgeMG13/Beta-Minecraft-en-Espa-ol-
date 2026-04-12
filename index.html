@@ -718,10 +718,10 @@
     /* ══ SEARCH ══ */
     function buildSearchIndex() {
       _searchIndex = [];
-      _cache.noticia.forEach(n => _searchIndex.push({ tipo:'NOTICIA', titulo:n.titulo, excerpt:n.texto?.slice(0,80), action:()=>abrirNoticia(n.id) }));
-      _cache.guias.forEach(g => _searchIndex.push({ tipo:'GUÍA', titulo:g.titulo, excerpt:g.categoria, action:()=>{ showSection('guias',document.getElementById('nav-guias')); setTimeout(()=>abrirGuia(g.id),100); } }));
-      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:c.texto, action:()=>abrirCuriosidad(c.id) }));
-      _cache.otros.forEach(o => _searchIndex.push({ tipo:'OTROS', titulo:o.titulo, excerpt:o.texto, action:()=>{ showSection('otros',document.getElementById('nav-otros')); setTimeout(()=>abrirOtros(o.id),100); } }));
+      _cache.noticia.forEach(n    => _searchIndex.push({ tipo:'NOTICIA',    titulo:n.titulo,                 excerpt:n.texto?.slice(0,80),  action:()=>{ window.location.href='noticia.html?id='+n.id; } }));
+      _cache.guias.forEach(g      => _searchIndex.push({ tipo:'GUÍA',       titulo:g.titulo,                 excerpt:g.categoria,           action:()=>{ window.location.href='guia.html?id='+g.id; } }));
+      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:c.texto,               action:()=>{ window.location.href='curiosidad.html?id='+c.id; } }));
+      _cache.otros.forEach(o      => _searchIndex.push({ tipo:'OTROS',      titulo:o.titulo,                 excerpt:o.texto,               action:()=>{ window.location.href='otros.html?id='+o.id; } }));
       _cache.quiz.forEach(q => { const opciones=Array.isArray(q.opciones)?q.opciones:JSON.parse(q.opciones||'[]'); _searchIndex.push({ tipo:'QUIZ', titulo:q.pregunta, excerpt:opciones.join(' · '), action:()=>showSection('quiz',document.getElementById('nav-quiz')) }); });
     }
     document.getElementById('global-search').addEventListener('input', function() {
@@ -802,7 +802,7 @@
       const imgHtml = n.imagen
         ? `<div class="post-card-img-wrap"><img class="post-card-img" src="${esc(n.imagen)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=post-card-img-placeholder><img src=logo.png alt=Logo /></div>'" /></div>`
         : `<div class="post-card-img-placeholder"><img src="logo.png" alt="Logo" /></div>`;
-      return `<div class="post-card" onclick="abrirNoticia('${n.id}')">
+      return `<a class="post-card" href="noticia.html?id=${n.id}" style="text-decoration:none;">
         ${imgHtml}
         <div class="post-card-body">
           <span class="post-card-category">Noticia</span>
@@ -810,7 +810,7 @@
           <div class="post-card-excerpt">${esc(n.texto?.slice(0,100))}${n.texto?.length>100?'…':''}</div>
           <div class="post-card-meta">${n.fecha}</div>
         </div>
-      </div>`;
+      </a>`;
     }
     function abrirNoticia(id) {
       const n = getDatos('noticia').find(x=>x.id===id); if(!n) return;
@@ -833,7 +833,7 @@
       const imgHtml = g.imagen_url
         ? `<img class="guia-card-img" src="${esc(g.imagen_url)}" alt="" loading="lazy" onerror="this.style.display='none'" />`
         : `<div class="guia-card-img-placeholder">📖</div>`;
-      return `<div class="guia-card" onclick="abrirGuia('${g.id}')">
+      return `<a class="guia-card" href="guia.html?id=${g.id}" style="text-decoration:none;">
         ${imgHtml}
         <div class="guia-card-body">
           ${g.dificultad?`<span class="guia-dificultad ${difClass(g.dificultad)}">${esc(g.dificultad)}</span>`:''}
@@ -841,7 +841,7 @@
           <div class="guia-card-title">${esc(g.titulo)}</div>
           <div class="guia-card-steps">${pasos.length} paso${pasos.length!==1?'s':''}</div>
         </div>
-      </div>`;
+      </a>`;
     }
     function abrirGuia(id) {
       const g = getDatos('guias').find(x=>x.id===id||x.id==id); if(!g) return;
@@ -883,7 +883,7 @@
       const lista=getDatos('curiosidad');
       document.getElementById('curiosidades-list').innerHTML=lista.length===0
         ?'<div class="empty-state">💡 Aún no hay datos curiosos.</div>'
-        :lista.map(c=>`<div class="curiosidad-card" onclick="abrirCuriosidad('${c.id}')"><span class="curiosidad-icon">💡</span><p>${esc(c.texto)}</p><span class="post-date">${c.fecha}</span></div>`).join('');
+        :lista.map(c=>`<a class="curiosidad-card" href="curiosidad.html?id=${c.id}" style="text-decoration:none;"><span class="curiosidad-icon">💡</span><p>${esc(c.texto)}</p><span class="post-date">${c.fecha}</span></a>`).join('');
     }
     function abrirCuriosidad(id) {
       const c=getDatos('curiosidad').find(x=>x.id===id); if(!c) return;
@@ -895,7 +895,7 @@
       const lista=getDatos('otros');
       document.getElementById('otros-list').innerHTML=lista.length===0
         ?'<div class="empty-state">🎭 Aún no hay contenido.</div>'
-        :lista.map(c=>`<div class="otros-card" onclick="abrirOtros('${c.id}')"><h3>${esc(c.titulo||'')}</h3><p>${esc(c.texto.slice(0,100))}${c.texto.length>100?'…':''}</p><span class="post-date">${c.fecha}</span></div>`).join('');
+        :lista.map(c=>`<a class="otros-card" href="otros.html?id=${c.id}" style="text-decoration:none;"><h3>${esc(c.titulo||'')}</h3><p>${esc(c.texto.slice(0,100))}${c.texto.length>100?'…':''}</p><span class="post-date">${c.fecha}</span></a>`).join('');
     }
     function abrirOtros(id) {
       const c=getDatos('otros').find(x=>x.id===id); if(!c) return;
