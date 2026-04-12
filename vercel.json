@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/noticia.html", "destination": "/api/noticia" }
+  ]
+}
