@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/noticia.html(.*)", "destination": "/api/noticia$1" }
-  ]
-}
