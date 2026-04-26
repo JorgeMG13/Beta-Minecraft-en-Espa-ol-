@@ -10,6 +10,14 @@ const sb = createClient(
 );
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', 'https://minecraft-en-espanol-admin.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   const auth = req.headers['authorization'];
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'No autorizado' });
