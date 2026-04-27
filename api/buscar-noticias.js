@@ -1,4 +1,7 @@
 // api/buscar-noticias.js
+// Vercel Serverless Function — se ejecuta cada día a las 8:00 (configurado en vercel.json)
+// Busca noticias de Minecraft con NewsAPI y las guarda en Supabase como 'pendiente'
+
 import { createClient } from '@supabase/supabase-js';
 
 const sb = createClient(
@@ -6,107 +9,66 @@ const sb = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-function parseItems(xml) {
-  const tag   = xml.includes('<entry') ? 'entry' : 'item';
-  const items = [];
-  const re    = new RegExp(`<${tag}[\\s>]([\\s\\S]*?)<\\/${tag}>`, 'g');
-  let m;
-  while ((m = re.exec(xml)) !== null) {
-    const block = m[1];
-    const get   = (t) => {
-      const r = block.match(new RegExp(`<${t}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${t}>`, 'i'));
-      return r ? r[1].trim() : '';
-    };
-    const title = get('title');
-    const link  = get('link') || block.match(/href="([^"]+)"/)?.[1] || get('guid');
-    const desc  = get('summary') || get('description') || get('content');
-    const image = block.match(/url="([^"]+\.(jpg|jpeg|png|webp))"/i)?.[1] ||
-                  block.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
-    if (title && title !== '[Removed]') {
-      items.push({
-        titulo: title,
-        texto:  desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400) || title,
-        enlace: link || null,
-        imagen: image,
-      });
-    }
-  }
-  return items;
-}
-
-const FUENTES = [
-  { url: 'https://www.minecraft.net/en-us/feeds/community-content/articles.xml', nombre: 'Minecraft.net', limite: 4 },
-  { url: 'https://www.planetminecraft.com/rss/news.xml', nombre: 'Planet Minecraft', limite: 3 },
-  { url: 'https://feeds.feedburner.com/minecrafter', nombre: 'Minecrafter', limite: 3 },
-];
-
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://minecraft-en-espanol-admin.vercel.app');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
   const auth = req.headers['authorization'];
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'No autorizado' });
   }
 
-  const articulos = [];
-  const fechaHoy  = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-  const desde     = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  // ── RSS Feeds ──
-  for (const fuente of FUENTES) {
-    try {
-      const r   = await fetch(fuente.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MinecraftBot/1.0)' } });
-      if (!r.ok) { console.error(`${fuente.nombre}: HTTP ${r.status}`); continue; }
-      const xml   = await r.text();
-      const items = parseItems(xml).slice(0, fuente.limite);
-      items.forEach(i => articulos.push({ ...i, fuente: fuente.nombre }));
-      console.log(`${fuente.nombre}: ${items.length} artículos`);
-    } catch (e) { console.error(`${fuente.nombre} error:`, e.message); }
-  }
-
-  // ── NewsAPI ──
   try {
-    const url  = `https://newsapi.org/v2/everything?q=%22Minecraft%22&from=${desde}&sortBy=publishedAt&pageSize=5&apiKey=${process.env.NEWSAPI_KEY}`;
-    const r    = await fetch(url);
-    const data = await r.json();
-    if (data.status === 'ok') {
-      for (const a of (data.articles || [])) {
-        if (!a.title || a.title === '[Removed]' || !a.description) continue;
-        if (!a.title.toLowerCase().includes('minecraft')) continue;
-        articulos.push({
-          titulo: a.title,
-          texto:  a.description,
-          enlace: a.url || null,
-          imagen: a.urlToImage || null,
-          fuente: a.source?.name || 'NewsAPI'
-        });
+    // 1. Buscar noticias de Minecraft en NewsAPI
+    const hoy = new Date();
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+    const desde = ayer.toISOString().split('T')[0];
+
+    const url = `https://newsapi.org/v2/everything?q=Minecraft&language=es&from=${desde}&sortBy=publishedAt&pageSize=5&apiKey=${process.env.NEWSAPI_KEY}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status !== 'ok' || !data.articles?.length) {
+      // Si no hay noticias en español, buscar en inglés
+      const url2 = `https://newsapi.org/v2/everything?q=Minecraft&language=en&from=${desde}&sortBy=publishedAt&pageSize=5&apiKey=${process.env.NEWSAPI_KEY}`;
+      const response2 = await fetch(url2);
+      const data2 = await response2.json();
+
+      if (data2.status !== 'ok' || !data2.articles?.length) {
+        return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron noticias' });
       }
-    } else {
-      console.error('NewsAPI:', data.message);
+      data.articles = data2.articles;
     }
-  } catch (e) { console.error('NewsAPI error:', e.message); }
 
-  console.log(`Total artículos encontrados: ${articulos.length}`);
+    // 2. Filtrar artículos sin contenido útil
+    const articulos = data.articles.filter(a => a.title && a.title !== '[Removed]' && a.description);
 
-  if (!articulos.length) {
-    return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron noticias' });
+    if (!articulos.length) {
+      return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron noticias válidas' });
+    }
+
+    // 3. Formatear fecha en español
+    const fechaHoy = hoy.toLocaleDateString('es-ES', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    });
+
+    // 4. Guardar en Supabase con estado 'pendiente'
+    const rows = articulos.map(a => ({
+      titulo: a.title,
+      texto: a.description || a.content || '',
+      enlace: a.url || null,
+      imagen: a.urlToImage || null,
+      fuente: a.source?.name || null,
+      fecha: fechaHoy,
+      estado: 'pendiente'
+    }));
+
+    const { error } = await sb.from('noticias').insert(rows);
+    if (error) throw error;
+
+    return res.status(200).json({ ok: true, guardadas: rows.length });
+
+  } catch (err) {
+    console.error('Error en buscar-noticias:', err);
+    return res.status(500).json({ error: err.message });
   }
-
-  const rows = articulos.map(a => ({
-    titulo: a.titulo,
-    texto:  a.texto || a.titulo,
-    enlace: a.enlace || null,
-    imagen: a.imagen || null,
-    fuente: a.fuente || null,
-    fecha:  fechaHoy,
-    estado: 'pendiente'
-  }));
-
-  const { error } = await sb.from('noticias_ia').insert(rows);
-  if (error) return res.status(500).json({ error: error.message });
-
-  return res.status(200).json({ ok: true, guardadas: rows.length });
 }
