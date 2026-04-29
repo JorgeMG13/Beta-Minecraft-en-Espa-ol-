@@ -36,20 +36,26 @@ function parseItems(xml) {
     const image = block.match(/url="([^"]+\.(jpg|jpeg|png|webp))"/i)?.[1] ||
                   block.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
     if (title && title !== '[Removed]') {
-      items.push({
-        titulo: title,
-        texto:  desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400) || title,
-        enlace: link || null,
-        imagen: image,
-      });
+      const textoLimpio = desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400);
+      // Solo incluir si menciona Minecraft
+      if (title.toLowerCase().includes('minecraft') || textoLimpio.toLowerCase().includes('minecraft')) {
+        items.push({
+          titulo: title,
+          texto:  textoLimpio || title,
+          enlace: link || null,
+          imagen: image,
+        });
+      }
     }
   }
   return items;
 }
 
 const FUENTES = [
-  { url: 'https://www.minecraft.net/en-us/feeds/community-content/articles.xml', nombre: 'Minecraft.net', limite: 4 },
-  { url: 'https://www.planetminecraft.com/rss/news.xml', nombre: 'Planet Minecraft', limite: 3 },
+  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer', limite: 5 },
+  { url: 'https://www.ign.com/rss/articles', nombre: 'IGN', limite: 5 },
+  { url: 'https://kotaku.com/rss', nombre: 'Kotaku', limite: 5 },
+  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer', limite: 5 },
 ];
 
 module.exports = async function handler(req, res) {
@@ -70,15 +76,22 @@ module.exports = async function handler(req, res) {
 
   for (const fuente of FUENTES) {
     try {
-      const r   = await fetch(fuente.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MinecraftBot/1.0)' } });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const r = await fetch(fuente.url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MinecraftBot/1.0)' },
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
       if (!r.ok) { console.error(`${fuente.nombre}: HTTP ${r.status}`); continue; }
       const xml   = await r.text();
       const items = parseItems(xml).slice(0, fuente.limite);
       items.forEach(i => articulos.push({ ...i, fuente: fuente.nombre }));
-      console.log(`${fuente.nombre}: ${items.length} artículos`);
+      console.log(`${fuente.nombre}: ${items.length} artículos de Minecraft`);
     } catch (e) { console.error(`${fuente.nombre} error:`, e.message); }
   }
 
+  // NewsAPI
   try {
     const url  = `https://newsapi.org/v2/everything?q=%22Minecraft%22&from=${desde}&sortBy=publishedAt&pageSize=5&apiKey=${process.env.NEWSAPI_KEY}`;
     const r    = await fetch(url);
@@ -86,7 +99,7 @@ module.exports = async function handler(req, res) {
     if (data.status === 'ok') {
       for (const a of (data.articles || [])) {
         if (!a.title || a.title === '[Removed]' || !a.description) continue;
-        if (!a.title.toLowerCase().includes('minecraft')) continue;
+        if (!a.title.toLowerCase().includes('minecraft') && !a.description.toLowerCase().includes('minecraft')) continue;
         articulos.push({
           titulo: a.title,
           texto:  a.description,
