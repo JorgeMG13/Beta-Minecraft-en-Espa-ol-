@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://minecraft-en-espanol.vercel.app/sitemap.xml
