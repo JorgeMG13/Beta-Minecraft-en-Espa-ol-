@@ -1,13 +1,17 @@
 {
   "rewrites": [
-    { "source": "/noticias",       "destination": "/api/noticias" },
-    { "source": "/noticias/:id",   "destination": "/api/noticia?id=:id" },
-    { "source": "/guias",          "destination": "/api/guias" },
-    { "source": "/guias/:id",      "destination": "/api/guia?id=:id" },
-    { "source": "/curiosidades",   "destination": "/api/curiosidades" },
-    { "source": "/curiosidades/:id","destination": "/api/curiosidad?id=:id" },
-    { "source": "/otros",          "destination": "/api/otros-lista" },
-    { "source": "/otros/:id",      "destination": "/api/otros?id=:id" }
+    { "source": "/noticias",            "destination": "/api/noticias" },
+    { "source": "/noticias/:id",        "destination": "/api/noticia?id=:id" },
+    { "source": "/api/noticia",         "destination": "/api/noticia" },
+    { "source": "/guias",               "destination": "/api/guias" },
+    { "source": "/guias/:id",           "destination": "/api/guia?id=:id" },
+    { "source": "/api/guia",            "destination": "/api/guia" },
+    { "source": "/curiosidades",        "destination": "/api/curiosidades" },
+    { "source": "/curiosidades/:id",    "destination": "/api/curiosidad?id=:id" },
+    { "source": "/api/curiosidad",      "destination": "/api/curiosidad" },
+    { "source": "/otros",               "destination": "/api/otros-lista" },
+    { "source": "/otros/:id",           "destination": "/api/otros?id=:id" },
+    { "source": "/api/otros",           "destination": "/api/otros" }
   ],
   "headers": [
     {
@@ -21,27 +25,23 @@
     {
       "source": "/sitemap.xml",
       "headers": [
-        { "key": "Content-Type",   "value": "application/xml" },
-        { "key": "Cache-Control",  "value": "public, max-age=86400" }
+        { "key": "Content-Type",  "value": "application/xml" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
     },
     {
       "source": "/robots.txt",
       "headers": [
-        { "key": "Cache-Control",  "value": "public, max-age=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
     }
   ],
   "redirects": [
-    { "source": "/index.html",              "destination": "/",                "permanent": true },
-    { "source": "/api/noticia",             "destination": "/noticias",        "permanent": true },
-    { "source": "/api/guia",                "destination": "/guias",           "permanent": true },
-    { "source": "/api/curiosidad",          "destination": "/curiosidades",    "permanent": true },
-    { "source": "/api/otros",               "destination": "/otros",           "permanent": true },
-    { "source": "/noticia.html",            "destination": "/noticias",        "permanent": true },
-    { "source": "/guia.html",               "destination": "/guias",           "permanent": true },
-    { "source": "/curiosidad.html",         "destination": "/curiosidades",    "permanent": true },
-    { "source": "/otros.html",              "destination": "/otros",           "permanent": true }
+    { "source": "/index.html",      "destination": "/",             "permanent": true },
+    { "source": "/noticia.html",    "destination": "/noticias",     "permanent": true },
+    { "source": "/guia.html",       "destination": "/guias",        "permanent": true },
+    { "source": "/curiosidad.html", "destination": "/curiosidades", "permanent": true },
+    { "source": "/otros.html",      "destination": "/otros",        "permanent": true }
   ],
   "crons": [
     { "path": "/api/buscar-noticias", "schedule": "0 8 * * *" }
