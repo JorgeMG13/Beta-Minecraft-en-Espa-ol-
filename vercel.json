@@ -1,17 +1,13 @@
 {
   "rewrites": [
-    { "source": "/noticias",            "destination": "/api/noticias" },
+    { "source": "/noticias",            "destination": "/api/list-noticias" },
     { "source": "/noticias/:id",        "destination": "/api/noticia?id=:id" },
-    { "source": "/api/noticia",         "destination": "/api/noticia" },
-    { "source": "/guias",               "destination": "/api/guias" },
+    { "source": "/guias",               "destination": "/api/list-guias" },
     { "source": "/guias/:id",           "destination": "/api/guia?id=:id" },
-    { "source": "/api/guia",            "destination": "/api/guia" },
-    { "source": "/curiosidades",        "destination": "/api/curiosidades" },
+    { "source": "/curiosidades",        "destination": "/api/list-curiosidades" },
     { "source": "/curiosidades/:id",    "destination": "/api/curiosidad?id=:id" },
-    { "source": "/api/curiosidad",      "destination": "/api/curiosidad" },
-    { "source": "/otros",               "destination": "/api/otros-lista" },
-    { "source": "/otros/:id",           "destination": "/api/otros?id=:id" },
-    { "source": "/api/otros",           "destination": "/api/otros" }
+    { "source": "/otros",               "destination": "/api/list-otros" },
+    { "source": "/otros/:id",           "destination": "/api/otros?id=:id" }
   ],
   "headers": [
     {
