@@ -108,9 +108,10 @@ export default async function handler(req) {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function cargar() {
-      // Soporta /noticias/123 (path) y ?id=123 (query legacy)
+      // Lee ?id= del query string primero (URL directa), luego del path (URL limpia)
+      const qsId = new URLSearchParams(window.location.search).get('id');
       const pathId = window.location.pathname.split('/').filter(Boolean).pop();
-      const id = (pathId && !/\.html$/.test(pathId)) ? pathId : new URLSearchParams(window.location.search).get('id');
+      const id = qsId || (pathId && pathId !== 'noticia' && pathId !== 'guia' && pathId !== 'curiosidad' && pathId !== 'otros' ? pathId : null);
       const wrap = document.getElementById('wrap');
       if (!id) { mostrarError(wrap); return; }
       const { data, error } = await sb.from('curiosidades').select('*').eq('id', id).single();
