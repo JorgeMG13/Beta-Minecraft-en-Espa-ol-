@@ -22,62 +22,66 @@ module.exports = async function handler(req, res) {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const html = await r.text();
 
-    // 2. Extraer título
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    let titulo = titleMatch ? titleMatch[1].replace(/\s*[-|].*$/, '').trim() : '';
+    // 2. Extraer texto limpio
+    const textoRaw = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 3000);
 
-    // 3. Extraer texto principal — busca <article>, <main> o <p> con más contenido
-    let texto = '';
-    const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
-                         html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-    if (articleMatch) {
-      texto = articleMatch[1]
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 600);
-    } else {
-      // Fallback: coger todos los párrafos
-      const parrafos = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-        .map(m => m[1].replace(/<[^>]+>/g, '').trim())
-        .filter(p => p.length > 80)
-        .slice(0, 3)
-        .join(' ');
-      texto = parrafos.slice(0, 600);
-    }
-
-    // 4. Extraer imagen og
+    // 3. Extraer imagen og
     const imgMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) ||
                      html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:image"/i);
     const imagen = imgMatch ? imgMatch[1] : null;
 
-    if (!titulo && !texto) throw new Error('No se pudo extraer contenido');
+    // 4. Usar Groq para generar la noticia limpia en español
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'system',
+            content: `Eres un redactor de noticias de Minecraft en español. 
+Tu tarea es transformar el contenido extraído de una web en una noticia limpia y atractiva en español.
+Responde SOLO con un JSON con este formato exacto, sin texto adicional:
+{"titulo": "Título corto y atractivo en español", "texto": "2-3 frases en español resumiendo la noticia de forma clara y directa, sin mencionar autores, fechas ni créditos"}`
+          },
+          {
+            role: 'user',
+            content: `URL: ${url}\n\nContenido extraído:\n${textoRaw}`
+          }
+        ]
+      })
+    });
 
-    // 5. Traducir
-    async function traducir(t) {
-      if (!t) return t;
-      try {
-        const u = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=${encodeURIComponent(t)}`;
-        const tr = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const d  = await tr.json();
-        return d[0].map(s => s[0]).join('');
-      } catch (e) { return t; }
+    const groqData = await groqRes.json();
+    const respuesta = groqData.choices?.[0]?.message?.content || '';
+
+    let titulo = '';
+    let texto  = '';
+
+    try {
+      const parsed = JSON.parse(respuesta.replace(/```json|```/g, '').trim());
+      titulo = parsed.titulo || '';
+      texto  = parsed.texto  || '';
+    } catch (e) {
+      // Si no parsea, usar el texto tal cual
+      titulo = respuesta.split('\n')[0].slice(0, 100);
+      texto  = respuesta.slice(0, 400);
     }
 
-    const [tituloEs, textoEs] = await Promise.all([
-      traducir(titulo),
-      traducir(texto)
-    ]);
-
-    return res.status(200).json({
-      ok: true,
-      titulo: tituloEs,
-      texto:  textoEs,
-      imagen,
-      enlace: url
-    });
+    return res.status(200).json({ ok: true, titulo, texto, imagen, enlace: url });
 
   } catch (err) {
     console.error('generar-noticia error:', err.message);
