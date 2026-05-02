@@ -19,15 +19,26 @@ const FUENTES = [
   { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant' },
 ];
 
-function extraerTitulos(xml) {
-  const titulos = [];
-  const re = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/gi;
+function extraerArticulos(xml) {
+  const articulos = [];
+  const tag = xml.includes('<entry') ? 'entry' : 'item';
+  const re = new RegExp(`<${tag}[\\s>]([\\s\\S]*?)<\\/${tag}>`, 'g');
   let m;
   while ((m = re.exec(xml)) !== null) {
-    const t = m[1].trim();
-    if (t && t.toLowerCase().includes('minecraft')) titulos.push(t);
+    const block = m[1];
+    const get = (t) => {
+      const r = block.match(new RegExp(`<${t}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${t}>`, 'i'));
+      return r ? r[1].trim() : '';
+    };
+    const titulo = get('title');
+    if (!titulo || !titulo.toLowerCase().includes('minecraft')) continue;
+    const enlace = get('link') || block.match(/href="([^"]+)"/)?.[1] || get('guid') || null;
+    const imagen = block.match(/url="([^"]+\.(jpg|jpeg|png|webp))"/i)?.[1] ||
+                   block.match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
+                   block.match(/<media:content[^>]+url="([^"]+)"/i)?.[1] || null;
+    articulos.push({ titulo, enlace, imagen });
   }
-  return titulos;
+  return articulos;
 }
 
 module.exports = async function handler(req, res) {
@@ -44,9 +55,8 @@ module.exports = async function handler(req, res) {
   }
 
   const fechaHoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+  const articulos = [];
 
-  // 1. Recoger titulares de Minecraft de todos los RSS
-  const titulares = [];
   for (const fuente of FUENTES) {
     try {
       const controller = new AbortController();
@@ -58,18 +68,18 @@ module.exports = async function handler(req, res) {
       clearTimeout(timeout);
       if (!r.ok) { console.error(`${fuente.nombre}: HTTP ${r.status}`); continue; }
       const xml = await r.text();
-      const items = extraerTitulos(xml);
-      items.forEach(t => titulares.push({ titulo: t, fuente: fuente.nombre }));
-      console.log(`${fuente.nombre}: ${items.length} titulares de Minecraft`);
+      const items = extraerArticulos(xml);
+      items.forEach(i => articulos.push({ ...i, fuente: fuente.nombre }));
+      console.log(`${fuente.nombre}: ${items.length} artículos de Minecraft`);
     } catch (e) { console.error(`${fuente.nombre} error:`, e.message); }
   }
 
-  if (!titulares.length) {
-    return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron titulares de Minecraft' });
+  if (!articulos.length) {
+    return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron artículos de Minecraft' });
   }
 
-  // 2. Mandar los titulares a Groq para que genere noticias en español
-  const listaTexto = titulares.map((t, i) => `${i + 1}. [${t.fuente}] ${t.titulo}`).join('\n');
+  // Mandar a Groq con título, enlace e índice para que los devuelva
+  const listaTexto = articulos.map((a, i) => `${i}. [${a.fuente}] ${a.titulo}`).join('\n');
 
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -83,24 +93,24 @@ module.exports = async function handler(req, res) {
       messages: [
         {
           role: 'system',
-          content: `Eres un redactor de noticias de Minecraft en español para una web llamada "Minecraft en Español".
-Recibirás una lista de titulares de noticias de Minecraft en inglés.
-Tu tarea es seleccionar los más interesantes y crear noticias en español.
-Responde SOLO con un JSON válido con este formato exacto, sin texto adicional ni markdown:
+          content: `Eres un redactor de noticias de Minecraft en español.
+Recibirás una lista numerada de titulares. Selecciona los más interesantes y genera noticias en español.
+Responde SOLO con JSON válido sin markdown:
 {
   "noticias": [
     {
+      "indice": 0,
       "titulo": "Título atractivo en español",
-      "texto": "2-3 frases en español explicando la noticia de forma clara y directa para fans de Minecraft",
-      "fuente": "Nombre del medio original"
+      "texto": "2-3 frases en español explicando la noticia de forma clara para fans de Minecraft",
+      "fuente": "Nombre del medio"
     }
   ]
 }
-Genera entre 3 y 6 noticias. Solo las más relevantes e interesantes.`
+Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original.`
         },
         {
           role: 'user',
-          content: `Estos son los titulares de hoy sobre Minecraft:\n\n${listaTexto}`
+          content: `Titulares de hoy sobre Minecraft:\n\n${listaTexto}`
         }
       ]
     })
@@ -123,15 +133,19 @@ Genera entre 3 y 6 noticias. Solo las más relevantes e interesantes.`
     return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'Groq no generó noticias' });
   }
 
-  const rows = noticias.map(n => ({
-    titulo: n.titulo,
-    texto:  n.texto,
-    enlace: null,
-    imagen: null,
-    fuente: n.fuente || 'IA',
-    fecha:  fechaHoy,
-    estado: 'pendiente'
-  }));
+  // Usar el índice para recuperar enlace e imagen del artículo original
+  const rows = noticias.map(n => {
+    const original = articulos[n.indice] || {};
+    return {
+      titulo: n.titulo,
+      texto:  n.texto,
+      enlace: original.enlace || null,
+      imagen: original.imagen || null,
+      fuente: n.fuente || original.fuente || 'IA',
+      fecha:  fechaHoy,
+      estado: 'pendiente'
+    };
+  });
 
   const { error } = await sb.from('noticias_ia').insert(rows);
   if (error) return res.status(500).json({ error: error.message });
