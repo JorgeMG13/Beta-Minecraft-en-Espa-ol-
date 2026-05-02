@@ -10,23 +10,22 @@ async function traducir(texto) {
   if (!texto) return texto;
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=${encodeURIComponent(texto)}`;
-    const r    = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const data = await r.json();
     return data[0].map(s => s[0]).join('');
   } catch (e) {
-    console.error('Traducción error:', e.message);
     return texto;
   }
 }
 
 function parseItems(xml) {
-  const tag   = xml.includes('<entry') ? 'entry' : 'item';
+  const tag = xml.includes('<entry') ? 'entry' : 'item';
   const items = [];
-  const re    = new RegExp(`<${tag}[\\s>]([\\s\\S]*?)<\\/${tag}>`, 'g');
+  const re = new RegExp(`<${tag}[\\s>]([\\s\\S]*?)<\\/${tag}>`, 'g');
   let m;
   while ((m = re.exec(xml)) !== null) {
     const block = m[1];
-    const get   = (t) => {
+    const get = (t) => {
       const r = block.match(new RegExp(`<${t}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${t}>`, 'i'));
       return r ? r[1].trim() : '';
     };
@@ -37,17 +36,30 @@ function parseItems(xml) {
                   block.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
     if (title && title !== '[Removed]') {
       const textoLimpio = desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400);
-      }
+      items.push({
+        titulo: title,
+        texto:  textoLimpio || title,
+        enlace: link || null,
+        imagen: image,
+      });
     }
   }
   return items;
 }
 
 const FUENTES = [
-  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer', limite: 5 },
-  { url: 'https://www.ign.com/rss/articles', nombre: 'IGN', limite: 5 },
-  { url: 'https://kotaku.com/rss', nombre: 'Kotaku', limite: 5 },
-  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer', limite: 5 },
+  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer', limite: 3 },
+  { url: 'https://www.ign.com/rss/articles', nombre: 'IGN', limite: 3 },
+  { url: 'https://kotaku.com/rss', nombre: 'Kotaku', limite: 3 },
+  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer', limite: 3 },
+  { url: 'https://www.rockpapershotgun.com/feed', nombre: 'Rock Paper Shotgun', limite: 3 },
+  { url: 'https://www.polygon.com/rss/index.xml', nombre: 'Polygon', limite: 3 },
+  { url: 'https://www.gamesradar.com/rss/', nombre: 'GamesRadar', limite: 3 },
+  { url: 'https://www.vg247.com/feed', nombre: 'VG247', limite: 3 },
+  { url: 'https://gamerant.com/feed/', nombre: 'Game Rant', limite: 3 },
+  { url: 'https://www.digitaltrends.com/gaming/feed/', nombre: 'Digital Trends', limite: 3 },
+  { url: 'https://www.thegamer.com/feed/', nombre: 'TheGamer', limite: 3 },
+  { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant', limite: 3 },
 ];
 
 module.exports = async function handler(req, res) {
@@ -63,8 +75,7 @@ module.exports = async function handler(req, res) {
   }
 
   const articulos = [];
-  const fechaHoy  = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-  const desde     = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const fechaHoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
   for (const fuente of FUENTES) {
     try {
@@ -76,34 +87,12 @@ module.exports = async function handler(req, res) {
       });
       clearTimeout(timeout);
       if (!r.ok) { console.error(`${fuente.nombre}: HTTP ${r.status}`); continue; }
-      const xml   = await r.text();
+      const xml = await r.text();
       const items = parseItems(xml).slice(0, fuente.limite);
       items.forEach(i => articulos.push({ ...i, fuente: fuente.nombre }));
-      console.log(`${fuente.nombre}: ${items.length} artículos de Minecraft`);
+      console.log(`${fuente.nombre}: ${items.length} artículos`);
     } catch (e) { console.error(`${fuente.nombre} error:`, e.message); }
   }
-
-  // NewsAPI
-  try {
-    const url  = `https://newsapi.org/v2/everything?q=%22Minecraft%22&from=${desde}&sortBy=publishedAt&pageSize=5&apiKey=${process.env.NEWSAPI_KEY}`;
-    const r    = await fetch(url);
-    const data = await r.json();
-    if (data.status === 'ok') {
-      for (const a of (data.articles || [])) {
-        if (!a.title || a.title === '[Removed]' || !a.description) continue;
-        if (!a.title.toLowerCase().includes('minecraft') && !a.description.toLowerCase().includes('minecraft')) continue;
-        articulos.push({
-          titulo: a.title,
-          texto:  a.description,
-          enlace: a.url || null,
-          imagen: a.urlToImage || null,
-          fuente: a.source?.name || 'NewsAPI'
-        });
-      }
-    } else {
-      console.error('NewsAPI:', data.message);
-    }
-  } catch (e) { console.error('NewsAPI error:', e.message); }
 
   if (!articulos.length) {
     return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron noticias' });
