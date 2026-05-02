@@ -37,14 +37,6 @@ function parseItems(xml) {
                   block.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
     if (title && title !== '[Removed]') {
       const textoLimpio = desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400);
-      // Solo incluir si menciona Minecraft
-      if (title.toLowerCase().includes('minecraft') || textoLimpio.toLowerCase().includes('minecraft')) {
-        items.push({
-          titulo: title,
-          texto:  textoLimpio || title,
-          enlace: link || null,
-          imagen: image,
-        });
       }
     }
   }
