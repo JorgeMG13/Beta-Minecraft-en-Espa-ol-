@@ -34,7 +34,7 @@ function parseItems(xml) {
     const desc  = get('summary') || get('description') || get('content');
     const image = block.match(/url="([^"]+\.(jpg|jpeg|png|webp))"/i)?.[1] ||
                   block.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
-    if (title && title !== '[Removed]') {
+    if (title && title !== '[Removed]' && title.toLowerCase().includes('minecraft')) {
       const textoLimpio = desc.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim().slice(0, 400);
       items.push({
         titulo: title,
@@ -48,18 +48,16 @@ function parseItems(xml) {
 }
 
 const FUENTES = [
-  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer', limite: 3 },
-  { url: 'https://www.ign.com/rss/articles', nombre: 'IGN', limite: 3 },
-  { url: 'https://kotaku.com/rss', nombre: 'Kotaku', limite: 3 },
-  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer', limite: 3 },
-  { url: 'https://www.rockpapershotgun.com/feed', nombre: 'Rock Paper Shotgun', limite: 3 },
-  { url: 'https://www.polygon.com/rss/index.xml', nombre: 'Polygon', limite: 3 },
-  { url: 'https://www.gamesradar.com/rss/', nombre: 'GamesRadar', limite: 3 },
-  { url: 'https://www.vg247.com/feed', nombre: 'VG247', limite: 3 },
-  { url: 'https://gamerant.com/feed/', nombre: 'Game Rant', limite: 3 },
-  { url: 'https://www.digitaltrends.com/gaming/feed/', nombre: 'Digital Trends', limite: 3 },
-  { url: 'https://www.thegamer.com/feed/', nombre: 'TheGamer', limite: 3 },
-  { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant', limite: 3 },
+  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer', limite: 10 },
+  { url: 'https://kotaku.com/rss', nombre: 'Kotaku', limite: 10 },
+  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer', limite: 10 },
+  { url: 'https://www.rockpapershotgun.com/feed', nombre: 'Rock Paper Shotgun', limite: 10 },
+  { url: 'https://www.polygon.com/rss/index.xml', nombre: 'Polygon', limite: 10 },
+  { url: 'https://www.gamesradar.com/rss/', nombre: 'GamesRadar', limite: 10 },
+  { url: 'https://www.vg247.com/feed', nombre: 'VG247', limite: 10 },
+  { url: 'https://gamerant.com/feed/', nombre: 'Game Rant', limite: 10 },
+  { url: 'https://www.thegamer.com/feed/', nombre: 'TheGamer', limite: 10 },
+  { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant', limite: 10 },
 ];
 
 module.exports = async function handler(req, res) {
@@ -90,7 +88,7 @@ module.exports = async function handler(req, res) {
       const xml = await r.text();
       const items = parseItems(xml).slice(0, fuente.limite);
       items.forEach(i => articulos.push({ ...i, fuente: fuente.nombre }));
-      console.log(`${fuente.nombre}: ${items.length} artículos`);
+      console.log(`${fuente.nombre}: ${items.length} artículos de Minecraft`);
     } catch (e) { console.error(`${fuente.nombre} error:`, e.message); }
   }
 
