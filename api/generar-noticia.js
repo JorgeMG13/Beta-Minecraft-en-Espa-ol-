@@ -67,6 +67,8 @@ Responde SOLO con un JSON con este formato exacto, sin texto adicional:
 
     const groqData = await groqRes.json();
     const respuesta = groqData.choices?.[0]?.message?.content || '';
+console.log('Groq respuesta:', respuesta);
+console.log('Groq data:', JSON.stringify(groqData));
 
     let titulo = '';
     let texto  = '';
