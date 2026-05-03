@@ -24,7 +24,7 @@ const FUENTES = [
   { url: 'https://www.thegamer.com/feed/', nombre: 'TheGamer' },
   { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant' },
   { url: 'https://feeds.feedburner.com/minecrafter', nombre: 'Minecrafter' },
-  ];
+];
 
 function extraerArticulos(xml) {
   const articulos = [];
@@ -85,7 +85,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'No se encontraron artículos de Minecraft' });
   }
 
-  // Mandar a Groq con título, enlace e índice para que los devuelva
   const listaTexto = articulos.map((a, i) => `${i}. [${a.fuente}] ${a.titulo}`).join('\n');
 
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -113,7 +112,7 @@ Responde SOLO con JSON válido sin markdown:
     }
   ]
 }
-Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original y No repitas noticias sobre el mismo tema aunque vengan de distintos medios. Si varios titulares hablan de lo mismo, elige solo uno, el mas completo preferiblemente.`
+Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original. No repitas noticias sobre el mismo tema aunque vengan de distintos medios. Si varios titulares hablan de lo mismo, elige solo uno.`
         },
         {
           role: 'user',
@@ -140,7 +139,6 @@ Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original y No
     return res.status(200).json({ ok: true, guardadas: 0, mensaje: 'Groq no generó noticias' });
   }
 
-  // Usar el índice para recuperar enlace e imagen del artículo original
   const rows = noticias.map(n => {
     const original = articulos[n.indice] || {};
     return {
