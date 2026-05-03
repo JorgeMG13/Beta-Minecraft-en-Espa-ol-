@@ -113,7 +113,7 @@ Responde SOLO con JSON válido sin markdown:
     }
   ]
 }
-Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original.`
+Genera entre 3 y 6 noticias. Incluye el índice exacto del titular original y No repitas noticias sobre el mismo tema aunque vengan de distintos medios. Si varios titulares hablan de lo mismo, elige solo uno, el mas completo preferiblemente.`
         },
         {
           role: 'user',
