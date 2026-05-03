@@ -7,17 +7,24 @@ const sb = createClient(
 );
 
 const FUENTES = [
-  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer' },
-  { url: 'https://kotaku.com/rss', nombre: 'Kotaku' },
-  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer' },
-  { url: 'https://www.rockpapershotgun.com/feed', nombre: 'Rock Paper Shotgun' },
-  { url: 'https://www.polygon.com/rss/index.xml', nombre: 'Polygon' },
+  { url: 'https://www.minecraft.net/en-us/feeds/community-content/articles.xml', nombre: 'Minecraft.net' },
+  { url: 'https://www.ign.com/rss/articles', nombre: 'IGN' },
   { url: 'https://www.gamesradar.com/rss/', nombre: 'GamesRadar' },
+  { url: 'https://www.eurogamer.net/?format=rss', nombre: 'Eurogamer' },
+  { url: 'https://www.polygon.com/rss/index.xml', nombre: 'Polygon' },
+  { url: 'https://kotaku.com/rss', nombre: 'Kotaku' },
+  { url: 'https://www.gamespot.com/feeds/mashup/', nombre: 'GameSpot' },
+  { url: 'https://www.windowscentral.com/rss.xml', nombre: 'Windows Central' },
+  { url: 'https://www.meristation.com/rss/topnews.xml', nombre: 'Meristation' },
+  { url: 'https://www.planetminecraft.com/rss/news.xml', nombre: 'Planet Minecraft' },
+  { url: 'https://www.pcgamer.com/rss/', nombre: 'PC Gamer' },
+  { url: 'https://www.rockpapershotgun.com/feed', nombre: 'Rock Paper Shotgun' },
   { url: 'https://www.vg247.com/feed', nombre: 'VG247' },
   { url: 'https://gamerant.com/feed/', nombre: 'Game Rant' },
   { url: 'https://www.thegamer.com/feed/', nombre: 'TheGamer' },
   { url: 'https://screenrant.com/feed/', nombre: 'Screen Rant' },
-];
+  { url: 'https://feeds.feedburner.com/minecrafter', nombre: 'Minecrafter' },
+  ];
 
 function extraerArticulos(xml) {
   const articulos = [];
