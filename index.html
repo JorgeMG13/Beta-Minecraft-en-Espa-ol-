@@ -293,12 +293,19 @@
     .about-tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--pixel); font-size: 6px; background: rgba(79,200,0,0.1); color: var(--green); border: 1px solid var(--border-em); padding: 5px 10px; margin: 3px; border-radius: 2px; cursor: pointer; transition: background 0.15s; }
     .about-tag:hover { background: rgba(79,200,0,0.2); }
 
-    /* ── WA BANNER ── */
+    /* ── YOU BANNER ── */
     .wa-banner { background: linear-gradient(135deg,#052e28 0%,#073d34 100%); border: 1px solid rgba(37,211,102,0.25); border-radius: var(--radius); padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
     .wa-banner-text { font-family: var(--pixel); font-size: 8px; color: #25d366; letter-spacing: 1px; }
     .wa-banner-sub { font-size: 14px; color: var(--txt-muted); margin-top: 4px; }
     .wa-btn { display: inline-flex; align-items: center; gap: 10px; background: #25d366; color: #052e28; font-family: var(--pixel); font-size: 7px; letter-spacing: 1px; padding: 12px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 700; transition: background 0.15s, transform 0.15s; border: none; cursor: pointer; }
     .wa-btn:hover { background: #1ebe58; transform: translateY(-2px); }
+
+    /* ── YOU BANNER ── */
+    .you-banner { background: linear-gradient(135deg,#052e28 0%,#073d34 100%); border: 1px solid rgba(37,211,102,0.25); border-radius: var(--radius); padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+    .you-banner-text { font-family: var(--pixel); font-size: 8px; color: #25d366; letter-spacing: 1px; }
+    .you-banner-sub { font-size: 14px; color: var(--txt-muted); margin-top: 4px; }
+    .you-btn { display: inline-flex; align-items: center; gap: 10px; background: #25d366; color: #052e28; font-family: var(--pixel); font-size: 7px; letter-spacing: 1px; padding: 12px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 700; transition: background 0.15s, transform 0.15s; border: none; cursor: pointer; }
+    .you-btn:hover { background: #1ebe58; transform: translateY(-2px); }
 
     /* ── TECHNO BANNER ── */
     .techno-banner { margin-top: 32px; background: linear-gradient(135deg,var(--surface) 0%,#1a1028 100%); border: 1px solid rgba(168,85,247,0.3); border-radius: var(--radius); padding: 32px; text-align: center; }
@@ -467,6 +474,89 @@
       .header-brand .site-logo { max-width: 200px !important; }
       .header-brand { gap: 8px; }
     }
+
+    /* ════════════════════════════════
+       EXPLOSIÓN CREEPER
+    ════════════════════════════════ */
+    .creeper-wrap.mc-charging,
+    .creeper-wrap.mc-shaking,
+    .creeper-wrap.mc-exploding { animation: none !important; cursor: not-allowed; }
+    .creeper-wrap.mc-charging::before,
+    .creeper-wrap.mc-shaking::before,
+    .creeper-wrap.mc-exploding::before { display: none; }
+    @keyframes mc-shake {
+      0%,100%{transform:translate(0,0) rotate(0deg);}
+      10%{transform:translate(-5px,-2px) rotate(-1.5deg);}
+      20%{transform:translate(5px,2px) rotate(1.5deg);}
+      30%{transform:translate(-6px,1px) rotate(-2deg);}
+      40%{transform:translate(6px,-1px) rotate(2deg);}
+      50%{transform:translate(-5px,3px) rotate(-1.5deg);}
+      60%{transform:translate(5px,-3px) rotate(1.5deg);}
+      70%{transform:translate(-3px,2px) rotate(-1deg);}
+      80%{transform:translate(3px,-2px) rotate(1deg);}
+      90%{transform:translate(-2px,1px) rotate(-.5deg);}
+    }
+    .creeper-wrap.mc-shaking { animation: mc-shake 0.07s linear infinite; }
+    @keyframes mc-creeper-die {
+      0%  { transform:scale(1);   opacity:1; filter:drop-shadow(0 12px 24px rgba(0,0,0,.6)) brightness(1); }
+      20% { transform:scale(1.5); opacity:1; filter:brightness(8) saturate(0); }
+      55% { transform:scale(2.8); opacity:.5; filter:brightness(15) saturate(0); }
+      100%{ transform:scale(4.5); opacity:0; filter:brightness(20) saturate(0); }
+    }
+    .creeper-wrap.mc-exploding .creeper-svg { animation: mc-creeper-die 0.5s ease-out forwards; }
+    .creeper-wrap.mc-exploding { pointer-events: none; }
+    #mc-screen-flash { position:fixed;inset:0;background:white;opacity:0;pointer-events:none;z-index:9900; }
+    @keyframes mc-do-flash { 0%{opacity:0;} 4%{opacity:.6;} 100%{opacity:0;} }
+    #mc-screen-flash.active { animation: mc-do-flash 0.65s ease-out forwards; }
+    #mc-particles { position:fixed;inset:0;pointer-events:none;z-index:9800;overflow:hidden; }
+    .mc-particle {
+      position:absolute; background-size:100% 100%; background-repeat:no-repeat;
+      image-rendering:pixelated; image-rendering:crisp-edges;
+      animation: mc-p-fly var(--dur) var(--ease) var(--delay) forwards;
+      transform-origin:center center;
+      width: 24px;
+      height: 24px;
+      }
+    @keyframes mc-p-fly {
+      0%  { transform:translate(0,0) rotate(0deg) scale(1); opacity:var(--op0); }
+      20% { opacity:var(--op0); }
+      100%{ transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(var(--sc1)); opacity:0; }
+    }
+    .mc-particle-dir { animation: mc-p-fly-dir var(--dur) var(--ease) var(--delay) forwards; }
+    @keyframes mc-p-fly-dir {
+      0%  { transform:translate(0,0) rotate(var(--rot)) scale(1); opacity:var(--op0); }
+      20% { opacity:var(--op0); }
+      100%{ transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(var(--sc1)); opacity:0; }
+    }
+    .mc-shockwave {
+      position:fixed; border-radius:50%; pointer-events:none; z-index:9799;
+      transform:translate(-50%,-50%) scale(0);
+      animation: mc-sw-grow var(--sw-dur) ease-out forwards;
+    }
+    @keyframes mc-sw-grow {
+      0%  { transform:translate(-50%,-50%) scale(0); opacity:.9; }
+      100%{ transform:translate(-50%,-50%) scale(var(--sw-s)); opacity:0; }
+    }
+    .mc-smoke-up {
+      position:fixed; background-size:100% 100%; background-repeat:no-repeat;
+      image-rendering:pixelated; pointer-events:none; z-index:9798;
+      transform-origin:center center;
+      animation: mc-smoke-rise var(--sd) ease-out var(--sdelay) forwards;
+    }
+    @keyframes mc-smoke-rise {
+      0%  { transform:translate(-50%,-50%) scale(.25) rotate(0deg); opacity:.85; }
+      40% { opacity:.55; }
+      100%{ transform:translate(-50%,-50%) scale(1.8) rotate(var(--srot)); opacity:0; }
+    }
+    @keyframes mc-cam-shake {
+      0%,100%{transform:translate(0,0);}
+      10%{transform:translate(-9px,5px);} 20%{transform:translate(9px,-5px);}
+      30%{transform:translate(-7px,7px);} 40%{transform:translate(7px,-7px);}
+      50%{transform:translate(-5px,4px);} 60%{transform:translate(5px,-4px);}
+      70%{transform:translate(-3px,2px);} 80%{transform:translate(3px,-1px);}
+      90%{transform:translate(-1px,1px);}
+    }
+    body.mc-cam-shaking { animation: mc-cam-shake 0.55s ease-out; }
   </style>
 </head>
 
@@ -538,16 +628,33 @@
         <button class="btn btn-outline" onclick="showSection('noticias',document.getElementById('nav-noticias'))">📰 Ver todas las noticias →</button>
       </div>
 
-      <div class="wa-banner" style="margin-top:40px;">
-        <div>
-          <div class="wa-banner-text">📡 SÍGUENOS EN WHATSAPP</div>
-          <div class="wa-banner-sub">Recibe las últimas noticias directamente en tu móvil</div>
-        </div>
-        <a href="https://whatsapp.com/channel/0029Vb7eEw5AYlUMLSikEn3a" target="_blank" rel="noopener" class="wa-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="#052e28"><path d="M16 2C8.28 2 2 8.28 2 16c0 2.44.65 4.73 1.78 6.72L2 30l7.5-1.75A13.94 13.94 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm6.3 19.9c-.34-.17-2.02-1-2.33-1.11-.31-.12-.54-.17-.77.17-.23.34-.88 1.11-1.08 1.34-.2.23-.4.26-.74.09-.34-.17-1.44-.53-2.74-1.69-1.01-.9-1.7-2.01-1.9-2.35-.2-.34-.02-.52.15-.69.15-.15.34-.4.51-.6.17-.2.23-.34.34-.57.12-.23.06-.43-.03-.6-.09-.17-.77-1.86-1.06-2.54-.28-.67-.56-.58-.77-.59h-.66c-.23 0-.6.09-.91.43-.31.34-1.2 1.17-1.2 2.85s1.23 3.3 1.4 3.53c.17.23 2.42 3.7 5.87 5.19.82.35 1.46.56 1.96.72.82.26 1.57.22 2.16.13.66-.1 2.02-.82 2.31-1.62.28-.8.28-1.48.2-1.62-.09-.14-.31-.23-.65-.4z"/></svg>
-          UNIRSE
-        </a>
+   <div class="wa-banner" style="margin-top:40px;">
+    <div>
+     <div class="wa-banner-text">
+     <img src="whatsapp.png" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;" alt="WhatsApp" />
+     SÍGUENOS EN WHATSAPP
+     </div>
+     <div class="wa-banner-sub">Recibe las últimas noticias directamente en tu móvil</div>
+    </div>
+     <a href="https://whatsapp.com/channel/0029Vb7eEw5AYlUMLSikEn3a" target="_blank" rel="noopener" class="wa-btn">
+     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="#052e28"><path d="M16 2C8.28 2 2 8.28 2 16c0 2.44.65 4.73 1.78 6.72L2 30l7.5-1.75A13.94 13.94 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm6.3 19.9c-.34-.17-2.02-1-2.33-1.11-.31-.12-.54-.17-.77.17-.23.34-.88 1.11-1.08 1.34-.2.23-.4.26-.74.09-.34-.17-1.44-.53-2.74-1.69-1.01-.9-1.7-2.01-1.9-2.35-.2-.34-.02-.52.15-.69.15-.15.34-.4.51-.6.17-.2.23-.34.34-.57.12-.23.06-.43-.03-.6-.09-.17-.77-1.86-1.06-2.54-.28-.67-.56-.58-.77-.59h-.66c-.23 0-.6.09-.91.43-.31.34-1.2 1.17-1.2 2.85s1.23 3.3 1.4 3.53c.17.23 2.42 3.7 5.87 5.19.82.35 1.46.56 1.96.72.82.26 1.57.22 2.16.13.66-.1 2.02-.82 2.31-1.62.28-.8.28-1.48.2-1.62-.09-.14-.31-.23-.65-.4z"/></svg>
+     UNIRSE
+    </a>
+   </div>
+
+ <div class="you-banner" style="margin-top:40px;">
+   <div>
+    <div class="you-banner-text">
+       <img src="youtube.png" style="height:26px;width:auto;vertical-align:middle;margin-right:4px;" alt="YouTube" />
+       SÍGUENOS EN YOUTUBE
+       </div>
+       <div class="you-banner-sub">Mira nuestros vídeos y tutoriales en el canal</div>
       </div>
+       <a href="https://youtube.com/@minecraftenespanol-mce?si=-xOaMG_huhvBEgLQ" target="_blank" rel="noopener" class="you-btn">
+       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#052e28"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+       UNIRSE
+      </a>
+     </div>
 
       <div class="about-box" style="margin-top:40px;">
         <h2>¿Qué es Minecraft en Español?</h2>
@@ -1138,5 +1245,211 @@
       document.getElementById('notif-toast').classList.remove('show');
     }
   </script>
+  <!-- ══ EXPLOSIÓN CREEPER ══ -->
+  <div id="mc-screen-flash"></div>
+  <div id="mc-particles"></div>
+
+  <script>
+  (function () {
+    const MC = {
+      creeper: "creeper.png",
+      white:   "creeper_white.png",
+      expl:  ["explosion_0.png","explosion_1.png","explosion_2.png",
+              "explosion_0.png","explosion_1.png","explosion_2.png",
+              "explosion_3.png","explosion_4.png"],
+      smoke:   "big_smoke_0.png",
+      audio:   "explosion.mp3"
+    };
+
+    const cWrap = document.querySelector('.hero .creeper-wrap');
+    const cImg  = cWrap ? cWrap.querySelector('.creeper-svg') : null;
+    const flash = document.getElementById('mc-screen-flash');
+    const pCont = document.getElementById('mc-particles');
+    if (!cWrap || !cImg) return;
+
+    let busy = false;
+    let audioCtx = null;
+    let audioBuf = null;
+
+    let _audioPrefetch = null;
+    fetch(MC.audio)
+      .then(r => r.arrayBuffer())
+      .then(ab => { _audioPrefetch = ab; })
+      .catch(() => {});
+
+    function initAudio() {
+      if (audioCtx) return;
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { return; }
+      if (_audioPrefetch) {
+        audioCtx.decodeAudioData(_audioPrefetch.slice(0), buf => { audioBuf = buf; });
+      } else {
+        fetch(MC.audio)
+          .then(r => r.arrayBuffer())
+          .then(ab => audioCtx.decodeAudioData(ab, buf => { audioBuf = buf; }))
+          .catch(() => {});
+      }
+    }
+
+    function playBoom() {
+      if (!audioCtx || !audioBuf) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = audioBuf;
+      src.connect(audioCtx.destination);
+      src.start(audioCtx.currentTime);
+    }
+
+    const rnd    = (a,b) => Math.random()*(b-a)+a;
+    const rndInt = (a,b) => Math.floor(rnd(a,b+1));
+    const pick   = arr  => arr[rndInt(0,arr.length-1)];
+
+    function clearMC(...cls) { cls.forEach(c => cWrap.classList.remove(c)); }
+
+    function fase1() {
+      busy = true;
+      cWrap.classList.add('mc-charging');
+      const BLINKS = 12, BASE_MS = 210;
+      let blink = 0, scale = 1.0;
+      function tick() {
+        if (blink >= BLINKS) {
+          cImg.src = MC.creeper;
+          cImg.style.transform = '';
+          fase2();
+          return;
+        }
+        cImg.src = (blink % 2 === 0) ? MC.white : MC.creeper;
+        scale += 0.022;
+        cImg.style.transform = `scale(${scale.toFixed(3)})`;
+        cImg.style.transformOrigin = 'center bottom';
+        blink++;
+        setTimeout(tick, Math.max(BASE_MS - blink * 5, 55));
+      }
+      tick();
+    }
+
+    function fase2() {
+      cImg.src = MC.white;
+      cImg.style.transform = 'scale(1.22)';
+      clearMC('mc-charging');
+      cWrap.classList.add('mc-shaking');
+      setTimeout(() => { clearMC('mc-shaking'); fase3(); }, 0);
+    }
+
+    function fase3() {
+      const rect = cWrap.getBoundingClientRect();
+      const cx = rect.left + rect.width  / 2;
+      const cy = rect.top  + rect.height / 2;
+
+      cImg.src = MC.creeper;
+      cWrap.classList.add('mc-exploding');
+
+      flash.classList.remove('active');
+      void flash.offsetWidth;
+      flash.classList.add('active');
+
+      document.body.classList.remove('mc-cam-shaking');
+      void document.body.offsetWidth;
+      document.body.classList.add('mc-cam-shaking');
+
+      spawnShockwaves(cx, cy);
+      spawnParticles(cx, cy);
+      setTimeout(() => spawnSmoke(cx, cy), 180);
+      setTimeout(reset, 3800);
+    }
+
+    function spawnShockwaves(cx, cy) {
+      [
+        { delay:0,   size:20, s:22, dur:'0.55s', col:'rgba(255,230,100,0.75)' },
+        { delay:110, size:30, s:18, dur:'0.65s', col:'rgba(255,160,50,0.60)'  },
+        { delay:240, size:40, s:14, dur:'0.75s', col:'rgba(200,100,30,0.45)'  }
+      ].forEach(({delay,size,s,dur,col}) => {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'mc-shockwave';
+          el.style.cssText = `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;border:3px solid ${col};--sw-dur:${dur};--sw-s:${s}`;
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 900);
+        }, delay);
+      });
+    }
+
+    function spawnParticles(cx, cy) {
+      for (let i = 0; i < 80; i++) {
+        const isSmoke = Math.random() < 0.22;
+        const tex     = isSmoke ? MC.smoke : pick(MC.expl);
+        const esDir   = (tex === MC.expl[6] || tex === MC.expl[7]);
+        const sz      = isSmoke ? rndInt(4,9)*8 : rndInt(20,48)*8;
+        const ang     = rnd(0, Math.PI*2);
+        const spd     = esDir ? rnd(40,140) : rnd(60,340);
+        const tx      = Math.cos(ang)*spd;
+        const bias    = isSmoke ? rnd(-80,-140) : rnd(-80,80);
+        const ty      = Math.sin(ang)*spd*0.75 + bias;
+        const angBase = esDir
+          ? (Math.atan2(ty, tx) * 180 / Math.PI) + 315
+          : rnd(-600, 600);
+
+        const el = document.createElement('div');
+        el.className = esDir ? 'mc-particle mc-particle-dir' : 'mc-particle';
+        el.style.cssText = [
+          `left:${(cx-sz/2).toFixed(1)}px`,
+          `top:${(cy-sz/2).toFixed(1)}px`,
+          `width:${sz}px`,
+          `height:${sz}px`,
+          `background-image:url('${tex}')`,
+          `--tx:${tx.toFixed(1)}px`,
+          `--ty:${ty.toFixed(1)}px`,
+          `--rot:${esDir ? angBase.toFixed(0) : angBase.toFixed(0)}deg`,
+          `--dur:${esDir ? rnd(0.4,0.9).toFixed(2) : rnd(0.45,1.7).toFixed(2)}s`,
+          `--delay:${rnd(0,0.12).toFixed(3)}s`,
+          `--sc1:${rnd(0.05,0.35).toFixed(2)}`,
+          `--ease:${Math.random()<0.5?'cubic-bezier(.25,.46,.45,.94)':'ease-out'}`,
+          `--op0:${rnd(0.8,1.0).toFixed(2)}`
+        ].join(';');
+        pCont.appendChild(el);
+      }
+      setTimeout(() => { pCont.innerHTML = ''; }, 1800);
+    }
+
+    function spawnSmoke(cx, cy) {
+      for (let i = 0; i < 10; i++) {
+        const sz  = rndInt(5,10)*12;
+        const el  = document.createElement('div');
+        el.className = 'mc-smoke-up';
+        el.style.cssText = [
+          `left:${(cx+rnd(-70,70)).toFixed(0)}px`,
+          `top:${(cy+rnd(-70,30)).toFixed(0)}px`,
+          `width:${sz}px`, `height:${sz}px`,
+          `background-image:url('${MC.smoke}')`,
+          `--sd:${rnd(1.4,2.5).toFixed(2)}s`,
+          `--sdelay:${rnd(0,0.6).toFixed(2)}s`,
+          `--srot:${rnd(-200,200).toFixed(0)}deg`
+        ].join(';');
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }
+    }
+
+    function reset() {
+      clearMC('mc-charging','mc-shaking','mc-exploding');
+      document.body.classList.remove('mc-cam-shaking');
+      cImg.src = MC.creeper;
+      cImg.style.transform = '';
+      pCont.innerHTML = '';
+      busy = false;
+    }
+
+    cWrap.addEventListener('click', () => {
+      if (busy) return;
+      initAudio();
+      playBoom();
+      fase1();
+    });
+
+    ['mousemove','touchstart','keydown'].forEach(ev =>
+      document.addEventListener(ev, initAudio, { once: true })
+    );
+  })();
+  </script>
+
 </body>
 </html>
