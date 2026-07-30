@@ -1,4 +1,4 @@
-a<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -23,7 +23,7 @@ a<!DOCTYPE html>
     .pixel-strip{height:6px;flex-shrink:0;background:repeating-linear-gradient(90deg,#4fc800 0,#4fc800 8px,#3aaa00 8px,#3aaa00 16px,#2d8800 16px,#2d8800 24px,#3aaa00 24px,#3aaa00 32px);}
 
     header{padding:14px 20px;background:rgba(11,15,10,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
-    .btn-back{font-family:var(--pixel);font-size:7px;color:var(--txt-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;cursor:pointer;letter-spacing:1px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:color .2s,border-color .2s;white-space:nowrap;}
+    .btn-back{font-family:var(--pixel);font-size:7px;color:var(--txt-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;cursor:pointer;letter-spacing:1px;transition:color 0.2s;}
     .btn-back:hover{color:var(--green);border-color:var(--border-em);}
     .header-label{font-family:var(--pixel);font-size:6px;color:var(--green);letter-spacing:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
@@ -35,16 +35,16 @@ a<!DOCTYPE html>
     .art-title{font-family:var(--display);font-size:clamp(28px,6vw,52px);font-weight:700;line-height:1.1;margin-bottom:14px;}
     .art-date{font-family:var(--pixel);font-size:6px;color:var(--txt-dim);letter-spacing:1px;padding-bottom:24px;border-bottom:1px solid var(--border);margin-bottom:32px;}
     .art-body{font-size:17px;line-height:1.75;color:var(--txt-muted);white-space:pre-wrap;word-break:break-word;}
-    .art-link{display:inline-flex;align-items:center;gap:8px;margin-top:36px;font-family:var(--pixel);font-size:7px;letter-spacing:1px;padding:12px 20px;background:transparent;color:var(--green);border:1px solid var(--border-em);border-radius:var(--radius);text-decoration:none;transition:background .2s;}
+    .art-link{display:inline-flex;align-items:center;gap:8px;margin-top:36px;font-family:var(--pixel);font-size:7px;letter-spacing:1px;padding:12px 20px;background:transparent;color:var(--green);border:1px solid var(--border-em);border-radius:var(--radius);cursor:pointer;text-decoration:none;transition:background 0.2s;}
     .art-link:hover{background:rgba(79,200,0,0.1);}
 
     .fs-video{
-    width:100%;
-    aspect-ratio:16/9;
-    border:none;
-    border-radius:var(--radius);
-    margin-bottom:32px;
-    display:block;
+      width:100%;
+      aspect-ratio:16/9;
+      border:none;
+      border-radius:var(--radius);
+      margin-bottom:32px;
+      display:block;
     }
     
     .not-found{text-align:center;padding:80px 20px;}
@@ -87,6 +87,36 @@ a<!DOCTYPE html>
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+    // ⭐ FUNCIÓN UNIVERSAL PARA CONVERTIR URLs DE YOUTUBE A EMBED
+    function convertirYouTubeUrl(url) {
+      if (!url) return '';
+      url = url.trim();
+      
+      // Si ya es una URL de embed, devolverla tal cual
+      if (url.includes('/embed/')) return url;
+      
+      let videoId = null;
+      
+      // Formato: https://www.youtube.com/watch?v=XXXXXX&...
+      if (url.includes('watch?v=')) {
+        videoId = url.split('watch?v=')[1].split('&')[0];
+      }
+      // Formato: https://youtu.be/XXXXXX
+      else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+      }
+      // Formato: https://www.youtube.com/embed/XXXXXX
+      else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('youtube.com/embed/')[1].split('?')[0];
+      }
+      // Formato: solo el ID (11 caracteres)
+      else if (url.length === 11 && !url.includes('/') && !url.includes('http')) {
+        videoId = url;
+      }
+      
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+
     async function cargar() {
       const id = new URLSearchParams(window.location.search).get('id');
       const wrap = document.getElementById('wrap');
@@ -98,17 +128,9 @@ a<!DOCTYPE html>
       document.title = data.titulo + ' | Minecraft en Español';
       document.getElementById('header-label').textContent = '📰 ' + data.titulo;
 
-    let videoHtml = '';
+      let videoHtml = '';
       if (data.video_url) {
-        let src = data.video_url;
-
-if (src.includes("youtu.be/")) {
-    const id = src.split("youtu.be/")[1].split("?")[0];
-    src = `https://www.youtube.com/embed/${id}`;
-} else if (src.includes("watch?v=")) {
-    const id = src.split("watch?v=")[1].split("&")[0];
-    src = `https://www.youtube.com/embed/${id}`;
-}
+        const src = convertirYouTubeUrl(data.video_url);
         videoHtml = `<iframe class="fs-video" src="${esc(src)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
       }
       
