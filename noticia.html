@@ -114,7 +114,16 @@
         videoId = url;
       }
       
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+
+      
+        let src = url;
+        if (src.includes('youtube.com/watch')) src = src.replace('watch?v=','embed/');
+        else if (src.includes('youtu.be/')) src = src.replace('youtu.be/','youtube.com/embed/');
+        
+      
+
+
+      return src ? src: url;
     }
 
     async function cargar() {
