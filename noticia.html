@@ -101,8 +101,14 @@ a<!DOCTYPE html>
     let videoHtml = '';
       if (data.video_url) {
         let src = data.video_url;
-        if (src.includes('youtube.com/watch')) src = src.replace('watch?v=','embed/');
-        else if (src.includes('youtu.be/')) src = src.replace('youtu.be/','youtube.com/embed/');
+
+if (src.includes("youtu.be/")) {
+    const id = src.split("youtu.be/")[1].split("?")[0];
+    src = `https://www.youtube.com/embed/${id}`;
+} else if (src.includes("watch?v=")) {
+    const id = src.split("watch?v=")[1].split("&")[0];
+    src = `https://www.youtube.com/embed/${id}`;
+}
         videoHtml = `<iframe class="fs-video" src="${esc(src)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
       }
       
