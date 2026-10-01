@@ -37,7 +37,7 @@ export default async function handler(req) {
   let items = [];
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/otros?select=id,titulo,texto,fecha&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/otros?select=id,titulo,texto,fecha,slug&order=created_at.desc`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     items = await res.json();
@@ -48,7 +48,8 @@ export default async function handler(req) {
     ? `<div class="empty">🎭 Aún no hay contenido extra publicado.</div>`
     : items.map(o => {
         const excerpt = (o.texto || '').slice(0, 120) + ((o.texto || '').length > 120 ? '…' : '');
-        return `<a class="card" href="${SITE}/otros/${o.id}">
+        const otrosUrl = o.slug ? `${SITE}/otros/${o.slug}` : `${SITE}/otros/${o.id}`;
+        return `<a class="card" href="${otrosUrl}">
           ${o.titulo ? `<div class="card-title">${esc(o.titulo)}</div>` : ''}
           <div class="card-text">${esc(excerpt)}</div>
           <span class="card-date">${esc(o.fecha)}</span>
@@ -64,7 +65,7 @@ export default async function handler(req) {
     "itemListElement": items.slice(0, 10).map((o, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": `${SITE}/otros/${o.id}`,
+      "url": o.slug ? `${SITE}/otros/${o.slug}` : `${SITE}/otros/${o.id}`,
       "name": o.titulo || (o.texto || '').slice(0, 60)
     }))
   };

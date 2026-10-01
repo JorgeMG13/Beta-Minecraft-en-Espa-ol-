@@ -10,17 +10,19 @@ function esc(s) {
 
 export default async function handler(req) {
   const url = new URL(req.url);
-  // Vercel reescribe /noticias/:id → /api/noticia?id=:id, leer siempre del query
+  const slug = url.searchParams.get('slug');
   const id = url.searchParams.get('id');
+  const queryKey = slug ? 'slug' : 'id';
+  const queryValue = slug || id;
 
   let titulo = 'Guía | Minecraft en Español';
   let descripcion = 'Guías paso a paso sobre Minecraft en castellano.';
   let imagen = `${SITE}/favicon-96x96.png`;
 
-  if (id) {
+  if (queryValue) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/guias?id=eq.${encodeURIComponent(id)}&select=titulo,imagen_url,categoria`,
+        `${SUPABASE_URL}/rest/v1/guias?${queryKey}=eq.${encodeURIComponent(queryValue)}&select=titulo,imagen_url,categoria`,
         { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       const data = await res.json();
@@ -33,7 +35,7 @@ export default async function handler(req) {
     } catch (_) {}
   }
 
-  const pageUrl = `${SITE}/api/guia${id ? '?id=' + id : ''}`;
+  const pageUrl = `${SITE}/guias${queryValue ? '/' + (slug || id) : ''}`;
 
   const html = `<!DOCTYPE html>
 <html lang="es">

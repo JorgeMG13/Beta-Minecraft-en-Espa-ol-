@@ -10,18 +10,21 @@ function esc(s) {
 
 export default async function handler(req) {
   const url = new URL(req.url);
-  // Vercel reescribe /noticias/:id → /api/noticia?id=:id, leer siempre del query
+  // Vercel reescribe /noticias/:slug → /api/noticia?slug=:slug, leer del query
+  const slug = url.searchParams.get('slug');
   const id = url.searchParams.get('id');
+  const queryKey = slug ? 'slug' : 'id';
+  const queryValue = slug || id;
 
   // Valores por defecto
   let titulo = 'Minecraft en Español';
   let descripcion = 'Noticias, guías, datos curiosos y quiz sobre Minecraft en castellano.';
   let imagen = `${SITE}/favicon-96x96.png`;
 
-  if (id) {
+  if (queryValue) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/noticias?id=eq.${encodeURIComponent(id)}&select=titulo,texto,imagen`,
+        `${SUPABASE_URL}/rest/v1/noticias?${queryKey}=eq.${encodeURIComponent(queryValue)}&select=titulo,texto,imagen`,
         { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       const data = await res.json();
@@ -34,7 +37,7 @@ export default async function handler(req) {
     } catch (_) {}
   }
 
-  const pageUrl = `${SITE}/noticia.html${id ? '?id=' + id : ''}`;
+  const pageUrl = `${SITE}/noticias${queryValue ? '/' + (slug || id) : ''}`;
 
   const html = `<!DOCTYPE html>
 <html lang="es">

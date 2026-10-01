@@ -1,13 +1,23 @@
 {
   "rewrites": [
     { "source": "/noticias",            "destination": "/api/list-noticias" },
-    { "source": "/noticias/:id",        "destination": "/api/noticia?id=:id" },
-    { "source": "/guias",               "destination": "/api/list-guias" },
-    { "source": "/guias/:id",           "destination": "/api/guia?id=:id" },
+    { "source": "/noticias/:slug",      "destination": "/api/noticia?slug=:slug" },
+    { "source": "/guias",               "destination": "/api/list-guia" },
+    { "source": "/guias/:slug",         "destination": "/api/guia?slug=:slug" },
     { "source": "/curiosidades",        "destination": "/api/list-curiosidades" },
     { "source": "/curiosidades/:id",    "destination": "/api/curiosidad?id=:id" },
     { "source": "/otros",               "destination": "/api/list-otros" },
-    { "source": "/otros/:id",           "destination": "/api/otros?id=:id" }
+    { "source": "/otros/:slug",         "destination": "/api/otros?slug=:slug" }
+  ],
+  "redirects": [
+    { "source": "/index.html",      "destination": "/",             "permanent": true },
+    { "source": "/noticia.html",    "destination": "/noticias",     "permanent": true },
+    { "source": "/guia.html",       "destination": "/guias",        "permanent": true },
+    { "source": "/curiosidad.html", "destination": "/curiosidades", "permanent": true },
+    { "source": "/otros.html",      "destination": "/otros",        "permanent": true },
+    { "source": "/noticias/:id",    "destination": "/api/redirect-noticia?id=:id", "permanent": true },
+    { "source": "/guias/:id",       "destination": "/api/redirect-guia?id=:id", "permanent": true },
+    { "source": "/otros/:id",       "destination": "/api/redirect-otros?id=:id", "permanent": true }
   ],
   "headers": [
     {
@@ -31,13 +41,6 @@
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
     }
-  ],
-  "redirects": [
-    { "source": "/index.html",      "destination": "/",             "permanent": true },
-    { "source": "/noticia.html",    "destination": "/noticias",     "permanent": true },
-    { "source": "/guia.html",       "destination": "/guias",        "permanent": true },
-    { "source": "/curiosidad.html", "destination": "/curiosidades", "permanent": true },
-    { "source": "/otros.html",      "destination": "/otros",        "permanent": true }
   ],
   "crons": [
     { "path": "/api/buscar-noticias", "schedule": "0 8 * * *" }

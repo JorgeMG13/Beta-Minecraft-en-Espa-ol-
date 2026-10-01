@@ -52,7 +52,7 @@ export default async function handler(req) {
   let items = [];
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/guias?select=id,titulo,imagen_url,categoria,dificultad,pasos&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/guias?select=id,titulo,imagen_url,categoria,dificultad,pasos,slug&order=created_at.desc`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     items = await res.json();
@@ -66,7 +66,8 @@ export default async function handler(req) {
         const imgHtml = g.imagen_url
           ? `<img class="guia-card-img" src="${esc(g.imagen_url)}" alt="${esc(g.titulo)} — Guía Minecraft en Español" loading="lazy" />`
           : `<div class="guia-card-placeholder">📖</div>`;
-        return `<a class="guia-card" href="${SITE}/guias/${g.id}">
+        const guiaUrl = g.slug ? `${SITE}/guias/${g.slug}` : `${SITE}/guias/${g.id}`;
+        return `<a class="guia-card" href="${guiaUrl}">
           ${imgHtml}
           <div class="guia-card-body">
             ${g.dificultad ? `<span class="dif-badge ${difClass(g.dificultad)}">${esc(g.dificultad)}</span>` : ''}
@@ -86,7 +87,7 @@ export default async function handler(req) {
     "itemListElement": items.slice(0, 10).map((g, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": `${SITE}/guias/${g.id}`,
+      "url": g.slug ? `${SITE}/guias/${g.slug}` : `${SITE}/guias/${g.id}`,
       "name": g.titulo
     }))
   };

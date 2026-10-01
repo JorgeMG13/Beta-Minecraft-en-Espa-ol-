@@ -45,7 +45,7 @@ export default async function handler(req) {
   let items = [];
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/noticias?select=id,titulo,texto,imagen,fecha&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/noticias?select=id,titulo,texto,imagen,fecha,slug&order=created_at.desc`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     items = await res.json();
@@ -59,7 +59,8 @@ export default async function handler(req) {
           ? `<div class="post-card-img-wrap"><img class="post-card-img" src="${esc(n.imagen)}" alt="${esc(n.titulo)}" loading="lazy" /></div>`
           : `<div class="post-card-placeholder">📰</div>`;
         const excerpt = (n.texto || '').slice(0, 120) + ((n.texto || '').length > 120 ? '…' : '');
-        return `<a class="post-card" href="${SITE}/noticias/${n.id}">
+        const noticiaUrl = n.slug ? `${SITE}/noticias/${n.slug}` : `${SITE}/noticias/${n.id}`;
+        return `<a class="post-card" href="${noticiaUrl}">
           ${imgHtml}
           <div class="post-card-body">
             <span class="post-card-cat">Noticia</span>
@@ -80,7 +81,7 @@ export default async function handler(req) {
     "itemListElement": items.slice(0, 10).map((n, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": `${SITE}/noticias/${n.id}`,
+      "url": n.slug ? `${SITE}/noticias/${n.slug}` : `${SITE}/noticias/${n.id}`,
       "name": n.titulo
     }))
   };
