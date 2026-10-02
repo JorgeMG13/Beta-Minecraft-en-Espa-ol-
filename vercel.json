@@ -4,7 +4,7 @@
     { "source": "/noticias/:slug",      "destination": "/api/noticia?slug=:slug" },
     { "source": "/guias",               "destination": "/api/list-guia" },
     { "source": "/guias/:slug",         "destination": "/api/guia?slug=:slug" },
-    { "source": "/curiosidades",        "destination": "/api/list-curiosidades" },
+    { "source": "/curiosidades",        "destination": "/api/list-curiosidad" },
     { "source": "/curiosidades/:id",    "destination": "/api/curiosidad?id=:id" },
     { "source": "/otros",               "destination": "/api/list-otros" },
     { "source": "/otros/:slug",         "destination": "/api/otros?slug=:slug" }
