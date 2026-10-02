@@ -14,10 +14,7 @@
     { "source": "/noticia.html",    "destination": "/noticias",     "permanent": true },
     { "source": "/guia.html",       "destination": "/guias",        "permanent": true },
     { "source": "/curiosidad.html", "destination": "/curiosidades", "permanent": true },
-    { "source": "/otros.html",      "destination": "/otros",        "permanent": true },
-    { "source": "/noticias/:id",    "destination": "/api/redirect-noticia?id=:id", "permanent": true },
-    { "source": "/guias/:id",       "destination": "/api/redirect-guia?id=:id", "permanent": true },
-    { "source": "/otros/:id",       "destination": "/api/redirect-otros?id=:id", "permanent": true }
+    { "source": "/otros.html",      "destination": "/otros",        "permanent": true }
   ],
   "headers": [
     {

@@ -10,21 +10,39 @@ function esc(s) {
 
 export default async function handler(req) {
   const url = new URL(req.url);
-  // Vercel reescribe /noticias/:slug → /api/noticia?slug=:slug, leer del query
+  // Vercel reescribe /noticias/:slug → /api/noticia?slug=:slug
   const slug = url.searchParams.get('slug');
-  const id = url.searchParams.get('id');
-  const queryKey = slug ? 'slug' : 'id';
-  const queryValue = slug || id;
+
+  // Si el "slug" parece UUID (formato antiguo), buscar el slug real y redirigir 301
+  function isUUID(str) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  }
+
+  if (slug && isUUID(slug)) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/noticias?id=eq.${encodeURIComponent(slug)}&select=slug`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      const data = await res.json();
+      if (Array.isArray(data) && data[0] && data[0].slug) {
+        return new Response(null, {
+          status: 301,
+          headers: { Location: `/noticias/${data[0].slug}` }
+        });
+      }
+    } catch (_) {}
+  }
 
   // Valores por defecto
   let titulo = 'Minecraft en Español';
   let descripcion = 'Noticias, guías, datos curiosos y quiz sobre Minecraft en castellano.';
   let imagen = `${SITE}/favicon-96x96.png`;
 
-  if (queryValue) {
+  if (slug) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/noticias?${queryKey}=eq.${encodeURIComponent(queryValue)}&select=titulo,texto,imagen`,
+        `${SUPABASE_URL}/rest/v1/noticias?slug=eq.${encodeURIComponent(slug)}&select=titulo,texto,imagen`,
         { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       const data = await res.json();
@@ -37,7 +55,7 @@ export default async function handler(req) {
     } catch (_) {}
   }
 
-  const pageUrl = `${SITE}/noticias${queryValue ? '/' + (slug || id) : ''}`;
+  const pageUrl = `${SITE}/noticias${slug ? '/' + slug : ''}`;
 
   const html = `<!DOCTYPE html>
 <html lang="es">
