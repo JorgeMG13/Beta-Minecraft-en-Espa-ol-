@@ -141,46 +141,54 @@ export default async function handler(req) {
   </main>
   <footer>© 2026 MINECRAFT EN ESPAÑOL · HECHO CON BLOQUES PARA VOSOTROS</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = 'https://mtkesqoywahieuapftmh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VzcW95d2FoaWV1YXBmdG1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODM1OTksImV4cCI6MjA4NzI1OTU5OX0.b_LmSnX_CGjL2YU5-JHqh14qHfv8NM9WNeMv5scZBpY';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');}
+
+    function isUUID(str) {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+    }
 
     async function cargar() {
-      // Lee ?id= del query string primero (URL directa), luego del path (URL limpia)
-      const qsId = new URLSearchParams(window.location.search).get('id');
-      const pathId = window.location.pathname.split('/').filter(Boolean).pop();
-      const id = qsId || (pathId && pathId !== 'noticia' && pathId !== 'guia' && pathId !== 'curiosidad' && pathId !== 'otros' ? pathId : null);
+      // Lee slug del path (/noticias/:slug) o ?slug= query
+      const qsSlug = new URLSearchParams(window.location.search).get('slug');
+      const pathSlug = window.location.pathname.split('/').filter(Boolean).pop();
+      const slug = qsSlug || (pathSlug && pathSlug !== 'noticias' ? pathSlug : null);
       const wrap = document.getElementById('wrap');
-      if (!id) { mostrarError(wrap); return; }
+      if (!slug) { mostrarError(wrap); return; }
 
-      const { data, error } = await sb.from('noticias').select('*').eq('id', id).single();
+      // Compatibilidad: si parece UUID, consultar por id; si no, por slug
+      const queryKey = isUUID(slug) ? 'id' : 'slug';
+      const queryValue = slug;
+
+      const { data, error } = await sb.from('noticias').select('*').eq(queryKey, queryValue).single();
       if (error || !data) { mostrarError(wrap); return; }
 
       document.title = data.titulo + ' | Minecraft en Español';
       document.getElementById('header-label').textContent = '📰 ' + data.titulo;
 
-      wrap.innerHTML = \`
-        \${data.imagen ? \`<img class="hero-img" src="\${esc(data.imagen)}" alt="\${esc(data.titulo)}" onerror="this.style.display='none'" />\` : ''}
+      wrap.innerHTML = `
+        ${data.imagen ? `<img class="hero-img" src="${esc(data.imagen)}" alt="${esc(data.titulo)}" onerror="this.style.display='none'" />` : ''}
         <div class="art-meta">📰 NOTICIA</div>
-        <h1 class="art-title">\${esc(data.titulo)}</h1>
-        <div class="art-date">\${esc(data.fecha)}</div>
-        <div class="art-body">\${esc(data.texto)}</div>
-        \${data.enlace ? \`<a class="art-link" href="\${esc(data.enlace)}" target="_blank" rel="noopener">🔗 Más información</a>\` : ''}
-      \`;
+        <h1 class="art-title">${esc(data.titulo)}</h1>
+        <div class="art-date">${esc(data.fecha)}</div>
+        <div class="art-body">${esc(data.texto)}</div>
+        ${data.enlace ? `<a class="art-link" href="${esc(data.enlace)}" target="_blank" rel="noopener">🔗 Más información</a>` : ''}
+      `;
     }
 
     function mostrarError(wrap) {
       document.title = 'Noticia no encontrada | Minecraft en Español';
-      wrap.innerHTML = \`
+      wrap.innerHTML = `
         <div class="not-found">
           <div class="nf-icon">🔍</div>
           <h2>Noticia no encontrada</h2>
           <p>El artículo que buscas no existe o fue eliminado.</p>
           <a href="/index.html" class="btn-back">← Volver al inicio</a>
-        </div>\`;
+        </div>`;
     }
 
     cargar();
