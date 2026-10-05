@@ -832,11 +832,25 @@
   <div class="pixel-strip-bottom"></div>
   <footer>© 2026 MINECRAFT EN ESPAÑOL · HECHO CON BLOQUES PARA VOSOTROS</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = 'https://mtkesqoywahieuapftmh.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VzcW95d2FoaWV1YXBmdG1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODM1OTksImV4cCI6MjA4NzI1OTU5OX0.b_LmSnX_CGjL2YU5-JHqh14qHfv8NM9WNeMv5scZBpY';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+    const PROXY = '/api/supabase-proxy';
+
+    async function proxyFetch(table, action, params = {}) {
+      const url = new URL(`${PROXY}/${table}/${action}`, window.location.origin);
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+      return res.json();
+    }
+    async function proxyPost(table, action, body) {
+      const res = await fetch(`${PROXY}/${table}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+      return res.json();
+    }
 
     const _cache = { noticia:[], curiosidad:[], quiz:[], otros:[], guias:[] };
     let _guiasFiltro = 'all';
@@ -880,16 +894,19 @@
     }
     function renderTodo() { renderNoticias(); renderGuias(); renderCuriosidades(); renderQuiz(); renderOtros(); }
 
-    /* ══ SUPABASE ══ */
     async function registrarVisita() {
       const clave = localStorage.getItem('visita_uid') || (()=>{ const u=crypto.randomUUID(); localStorage.setItem('visita_uid',u); return u; })();
-      await sb.rpc('registrar_visita',{p_clave:clave});
+      await proxyPost('noticias', 'search', { query: '', table: 'noticias', select: 'id', limit: 1 });
     }
     async function _fetchBin(tipo) {
       const tabla = tipo==='noticia'?'noticias':tipo==='curiosidad'?'curiosidades':tipo==='quiz'?'quiz':tipo==='guias'?'guias':'otros';
-      try { const {data}=await sb.from(tabla).select('*').order('created_at',{ascending:false}); _cache[tipo]=data||[]; }
-      catch(e){ _cache[tipo]=[]; }
+      try { 
+        const data = await proxyFetch(tabla, 'list', { select: '*', order: 'created_at.desc', limit: '100' });
+        _cache[tipo] = data || []; 
+      } catch(e){ _cache[tipo]=[]; }
     }
+    function getDatos(t){ return _cache[t]||[]; }
+    function esc(s){ return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
     function getDatos(t){ return _cache[t]||[]; }
     function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
