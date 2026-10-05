@@ -137,16 +137,17 @@ export default async function handler(req) {
       if (error || !data) { mostrarError(wrap); return; }
       document.title = (data.titulo || 'Contenido extra') + ' | Minecraft en Español';
       document.getElementById('header-label').textContent = '🎭 ' + (data.titulo || 'OTROS');
-      wrap.innerHTML = \`
-        <div class="art-meta">🎭 OTROS</div>
-        \${data.titulo ? \`<h1 class="art-title">\${esc(data.titulo)}</h1>\` : ''}
-        <div class="art-date">\${esc(data.fecha)}</div>
-        <div class="art-body">\${esc(data.texto)}</div>
-        \${data.enlace ? \`<a class="art-link" href="\${esc(data.enlace)}" target="_blank" rel="noopener">🔗 Más información</a>\` : ''}\`;
+      const parts = [];
+      parts.push('<div class="art-meta">🎭 OTROS</div>');
+      if (data.titulo) parts.push('<h1 class="art-title">' + esc(data.titulo) + '</h1>');
+      parts.push('<div class="art-date">' + esc(data.fecha) + '</div>');
+      parts.push('<div class="art-body">' + esc(data.texto) + '</div>');
+      if (data.enlace) parts.push('<a class="art-link" href="' + esc(data.enlace) + '" target="_blank" rel="noopener">🔗 Más información</a>');
+      wrap.innerHTML = parts.join('');
     }
     function mostrarError(wrap) {
       document.title = 'Contenido no encontrado | Minecraft en Español';
-      wrap.innerHTML = \`<div class="not-found"><div class="nf-icon">🔍</div><h2>Contenido no encontrado</h2><p>El contenido que buscas no existe o fue eliminado.</p><a href="/index.html" class="btn-back">← Volver al inicio</a></div>\`;
+      wrap.innerHTML = '<div class="not-found"><div class="nf-icon">🔍</div><h2>Contenido no encontrado</h2><p>El contenido que buscas no existe o fue eliminado.</p><a href="/index.html" class="btn-back">← Volver al inicio</a></div>';
     }
     cargar();
   </script>

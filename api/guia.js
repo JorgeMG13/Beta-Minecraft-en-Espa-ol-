@@ -155,21 +155,22 @@ export default async function handler(req) {
         let src = data.video_url;
         if (src.includes('youtube.com/watch')) src = src.replace('watch?v=','embed/');
         else if (src.includes('youtu.be/')) src = src.replace('youtu.be/','youtube.com/embed/');
-        videoHtml = \`<iframe class="fs-video" src="\${esc(src)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\`;
+        videoHtml = '<iframe class="fs-video" src="' + esc(src) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
       }
-      wrap.innerHTML = \`
-        \${data.imagen_url ? \`<img class="hero-img" src="\${esc(data.imagen_url)}" alt="\${esc(data.titulo)}" onerror="this.style.display='none'" />\` : ''}
-        \${videoHtml}
-        <div class="art-meta">📖 GUÍA\${data.categoria ? ' · ' + esc(data.categoria.toUpperCase()) : ''}</div>
-        \${data.dificultad ? \`<span class="dif-badge \${difClass(data.dificultad)}">\${esc(data.dificultad)}</span>\` : ''}
-        <h1 class="art-title">\${esc(data.titulo)}</h1>
-        <div class="steps-label">PASOS (\${pasos.length})</div>
-        <ol class="steps-list">\${pasos.map((p,i)=>\`<li><span class="step-num">\${String(i+1).padStart(2,'0')}</span><span>\${esc(p)}</span></li>\`).join('')}</ol>
-        \${data.enlace ? \`<a class="art-link" href="\${esc(data.enlace)}" target="_blank" rel="noopener">🔗 Más información</a>\` : ''}\`;
+      const parts = [];
+      if (data.imagen_url) parts.push('<img class="hero-img" src="' + esc(data.imagen_url) + '" alt="' + esc(data.titulo) + '" onerror="this.style.display=\'none\'" />');
+      parts.push(videoHtml);
+      parts.push('<div class="art-meta">📖 GUÍA' + (data.categoria ? ' · ' + esc(data.categoria.toUpperCase()) : '') + '</div>');
+      if (data.dificultad) parts.push('<span class="dif-badge ' + difClass(data.dificultad) + '">' + esc(data.dificultad) + '</span>');
+      parts.push('<h1 class="art-title">' + esc(data.titulo) + '</h1>');
+      parts.push('<div class="steps-label">PASOS (' + pasos.length + ')</div>');
+      parts.push('<ol class="steps-list">' + pasos.map((p, i) => '<li><span class="step-num">' + String(i+1).padStart(2,'0') + '</span><span>' + esc(p) + '</span></li>').join('') + '</ol>');
+      if (data.enlace) parts.push('<a class="art-link" href="' + esc(data.enlace) + '" target="_blank" rel="noopener">🔗 Más información</a>');
+      wrap.innerHTML = parts.join('');
     }
     function mostrarError(wrap) {
       document.title = 'Guía no encontrada | Minecraft en Español';
-      wrap.innerHTML = \`<div class="not-found"><div class="nf-icon">🔍</div><h2>Guía no encontrada</h2><p>El contenido que buscas no existe o fue eliminado.</p><a href="/index.html" class="btn-back">← Volver al inicio</a></div>\`;
+      wrap.innerHTML = '<div class="not-found"><div class="nf-icon">🔍</div><h2>Guía no encontrada</h2><p>El contenido que buscas no existe o fue eliminado.</p><a href="/index.html" class="btn-back">← Volver al inicio</a></div>';
     }
     cargar();
   </script>
