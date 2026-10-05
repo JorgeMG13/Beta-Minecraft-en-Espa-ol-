@@ -836,14 +836,19 @@
     const PROXY = '/api/supabase-proxy';
 
     async function proxyFetch(table, action, params = {}) {
-      const url = new URL(`${PROXY}/${table}/${action}`, window.location.origin);
+      const url = new URL(PROXY, window.location.origin);
+      url.searchParams.set('table', table);
+      url.searchParams.set('action', action);
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
       return res.json();
     }
     async function proxyPost(table, action, body) {
-      const res = await fetch(`${PROXY}/${table}/${action}`, {
+      const url = new URL(PROXY, window.location.origin);
+      url.searchParams.set('table', table);
+      url.searchParams.set('action', action);
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
