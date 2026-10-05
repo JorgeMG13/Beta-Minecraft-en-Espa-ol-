@@ -171,13 +171,13 @@ export default async function handler(req) {
       document.getElementById('header-label').textContent = '📰 ' + data.titulo;
 
 wrap.innerHTML = [
-         data.imagen ? '<img class="hero-img" src="' + esc(data.imagen) + '" alt="' + esc(data.titulo) + '" onerror="this.style.display=\'none\'" />' : '',
-         '<div class="art-meta">📰 NOTICIA</div>',
-         '<h1 class="art-title">' + esc(data.titulo) + '</h1>',
-         '<div class="art-date">' + esc(data.fecha) + '</div>',
-         '<div class="art-body">' + esc(data.texto) + '</div>',
-         data.enlace ? '<a class="art-link" href="' + esc(data.enlace) + '" target="_blank" rel="noopener">🔗 Más información</a>' : ''
-       ].join('');
+          data.imagen ? '<img class="hero-img" src="' + esc(data.imagen) + '" alt="' + esc(data.titulo) + '" onerror=\'this.style.display="none"\' />' : '',
+          '<div class="art-meta">📰 NOTICIA</div>',
+          '<h1 class="art-title">' + esc(data.titulo) + '</h1>',
+          '<div class="art-date">' + esc(data.fecha) + '</div>',
+          '<div class="art-body">' + esc(data.texto) + '</div>',
+          data.enlace ? '<a class="art-link" href="' + esc(data.enlace) + '" target="_blank" rel="noopener">🔗 Más información</a>' : ''
+        ].join('');
     }
 
     function mostrarError(wrap) {
