@@ -845,10 +845,10 @@
     /* ══ SEARCH ══ */
     function buildSearchIndex() {
       _searchIndex = [];
-      _cache.noticia.forEach(n    => _searchIndex.push({ tipo:'NOTICIA',    titulo:n.titulo,                 excerpt:n.texto?.slice(0,80),  action:()=>{ window.location.href='/noticias/'+n.id; } }));
-      _cache.guias.forEach(g      => _searchIndex.push({ tipo:'GUÍA',       titulo:g.titulo,                 excerpt:g.categoria,           action:()=>{ window.location.href='/guias/'+g.id; } }));
-      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:c.texto,               action:()=>{ window.location.href='/curiosidades/'+c.id; } }));
-      _cache.otros.forEach(o      => _searchIndex.push({ tipo:'OTROS',      titulo:o.titulo,                 excerpt:o.texto,               action:()=>{ window.location.href='/otros/'+o.id; } }));
+      _cache.noticia.forEach(n    => _searchIndex.push({ tipo:'NOTICIA',    titulo:n.titulo,                 excerpt:n.texto?.slice(0,80),  action:()=>{ window.location.href='/noticias/'+n.slug; } }));
+      _cache.guias.forEach(g      => _searchIndex.push({ tipo:'GUÍA',       titulo:g.titulo,                 excerpt:g.categoria,           action:()=>{ window.location.href='/guias/'+g.slug; } }));
+      _cache.curiosidad.forEach(c => _searchIndex.push({ tipo:'CURIOSIDAD', titulo:c.texto?.slice(0,50)+'…', excerpt:c.texto,               action:()=>{ window.location.href='/curiosidades/'+c.slug; } }));
+      _cache.otros.forEach(o      => _searchIndex.push({ tipo:'OTROS',      titulo:o.titulo,                 excerpt:o.texto,               action:()=>{ window.location.href='/otros/'+o.slug; } }));
       _cache.quiz.forEach(q => { const opciones=Array.isArray(q.opciones)?q.opciones:JSON.parse(q.opciones||'[]'); _searchIndex.push({ tipo:'QUIZ', titulo:q.pregunta, excerpt:opciones.join(' · '), action:()=>showSection('quiz',document.getElementById('nav-quiz')) }); });
     }
     document.getElementById('global-search').addEventListener('input', function() {
