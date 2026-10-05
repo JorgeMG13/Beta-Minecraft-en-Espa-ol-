@@ -929,7 +929,7 @@
       const imgHtml = n.imagen
         ? `<div class="post-card-img-wrap"><img class="post-card-img" src="${esc(n.imagen)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=post-card-img-placeholder><img src=logo.png alt=Logo /></div>'" /></div>`
         : `<div class="post-card-img-placeholder"><img src="logo.png" alt="Logo" /></div>`;
-      return `<a class="post-card" href="/noticias/${n.id}" style="text-decoration:none;">
+      return `<a class="post-card" href="/noticias/${n.slug || n.id}" style="text-decoration:none;">
         ${imgHtml}
         <div class="post-card-body">
           <span class="post-card-category">Noticia</span>
@@ -960,7 +960,7 @@
       const imgHtml = g.imagen_url
         ? `<img class="guia-card-img" src="${esc(g.imagen_url)}" alt="" loading="lazy" onerror="this.style.display='none'" />`
         : `<div class="guia-card-img-placeholder">📖</div>`;
-      return `<a class="guia-card" href="/guias/${g.id}" style="text-decoration:none;">
+      return `<a class="guia-card" href="/guias/${g.slug || g.id}" style="text-decoration:none;">
         ${imgHtml}
         <div class="guia-card-body">
           ${g.dificultad?`<span class="guia-dificultad ${difClass(g.dificultad)}">${esc(g.dificultad)}</span>`:''}
@@ -1022,7 +1022,7 @@
       const lista=getDatos('otros');
       document.getElementById('otros-list').innerHTML=lista.length===0
         ?'<div class="empty-state">🎭 Aún no hay contenido.</div>'
-        :lista.map(c=>`<a class="otros-card" href="/otros/${c.id}" style="text-decoration:none;"><h3>${esc(c.titulo||'')}</h3><p>${esc(c.texto.slice(0,100))}${c.texto.length>100?'…':''}</p><span class="post-date">${c.fecha}</span></a>`).join('');
+        :lista.map(c=>`<a class="otros-card" href="/otros/${c.slug || c.id}" style="text-decoration:none;"><h3>${esc(c.titulo||'')}</h3><p>${esc(c.texto.slice(0,100))}${c.texto.length>100?'…':''}</p><span class="post-date">${c.fecha}</span></a>`).join('');
     }
     function abrirOtros(id) {
       const c=getDatos('otros').find(x=>x.id===id); if(!c) return;
