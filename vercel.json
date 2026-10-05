@@ -8,7 +8,7 @@
     { "source": "/curiosidades/:id",    "destination": "/api/curiosidad?id=:id" },
     { "source": "/otros",               "destination": "/api/list-otros" },
     { "source": "/otros/:slug",         "destination": "/api/otros?slug=:slug" },
-    { "source": "/api/supabase-proxy/:table/:action*", "destination": "/api/supabase-proxy/:table/:action*" }
+    { "source": "/api/supabase-proxy", "destination": "/api/supabase-proxy" }
   ],
   "redirects": [
     { "source": "/index.html",      "destination": "/",             "permanent": true },

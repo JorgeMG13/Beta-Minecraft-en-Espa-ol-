@@ -29,18 +29,15 @@ export default async function handler(req) {
   }
 
   const url = new URL(req.url);
-  const path = url.pathname.replace('/api/supabase-proxy', '');
-  const segments = path.split('/').filter(Boolean);
+  const table = url.searchParams.get('table');
+  const action = url.searchParams.get('action');
 
-  if (segments.length < 2) {
-    return new Response(JSON.stringify({ error: 'Invalid path' }), {
+  if (!table || !action) {
+    return new Response(JSON.stringify({ error: 'Missing table or action' }), {
       status: 400,
       headers: { ...corsHeaders(), 'Content-Type': 'application/json' }
     });
   }
-
-  const table = segments[0];
-  const action = segments[1];
 
   if (!ALLOWED_TABLES.includes(table)) {
     return new Response(JSON.stringify({ error: 'Table not allowed' }), {
@@ -55,13 +52,13 @@ export default async function handler(req) {
     if (action === 'list') {
       const select = url.searchParams.get('select') || '*';
       const order = url.searchParams.get('order') || 'created_at.desc';
-      const limit = url.searchParams.get('limit') || '50';
+      const limit = url.searchParams.get('limit') || '100';
       
       supabaseUrl = `${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=${encodeURIComponent(order)}&limit=${encodeURIComponent(limit)}`;
       options = { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } };
 
-    } else if (action === 'by-slug' && segments[2]) {
-      const slug = segments[2];
+    } else if (action === 'by-slug') {
+      const slug = url.searchParams.get('slug');
       if (!validateSlug(slug)) {
         return new Response(JSON.stringify({ error: 'Invalid slug' }), {
           status: 400,
@@ -71,8 +68,8 @@ export default async function handler(req) {
       supabaseUrl = `${SUPABASE_URL}/rest/v1/${table}?slug=eq.${encodeURIComponent(slug)}&select=*`;
       options = { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } };
 
-    } else if (action === 'by-id' && segments[2]) {
-      const id = segments[2];
+    } else if (action === 'by-id') {
+      const id = url.searchParams.get('id');
       if (!validateId(id)) {
         return new Response(JSON.stringify({ error: 'Invalid id' }), {
           status: 400,
