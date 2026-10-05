@@ -171,7 +171,7 @@ export default async function handler(req) {
       document.getElementById('header-label').textContent = '📰 ' + data.titulo;
 
 wrap.innerHTML = [
-          data.imagen ? '<img class="hero-img" src="' + esc(data.imagen) + '" alt="' + esc(data.titulo) + '" onerror="this.style.display=\'none\'" />' : '',
+          data.imagen ? '<img class="hero-img" src="' + esc(data.imagen) + '" alt="' + esc(data.titulo) + '" />' : '',
           '<div class="art-meta">📰 NOTICIA</div>',
           '<h1 class="art-title">' + esc(data.titulo) + '</h1>',
           '<div class="art-date">' + esc(data.fecha) + '</div>',
