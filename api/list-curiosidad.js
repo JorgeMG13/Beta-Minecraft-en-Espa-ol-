@@ -1,5 +1,7 @@
 export const config = { runtime: 'edge' };
 
+import { checkRateLimit, getClientIP, corsHeaders, rateLimitHeaders } from './_lib/rate-limit.js';
+
 const SUPABASE_URL      = 'https://mtkesqoywahieuapftmh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VzcW95d2FoaWV1YXBmdG1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODM1OTksImV4cCI6MjA4NzI1OTU5OX0.b_LmSnX_CGjL2YU5-JHqh14qHfv8NM9WNeMv5scZBpY';
 const SITE              = 'https://minecraft-en-espanol.vercel.app';
@@ -34,6 +36,25 @@ const CSS = `
 `;
 
 export default async function handler(req) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+
+  const ip = getClientIP(req);
+  const { allowed, remaining, resetMs } = checkRateLimit(ip);
+  
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+      status: 429,
+      headers: { 
+        ...corsHeaders(), 
+        'Content-Type': 'application/json',
+        ...rateLimitHeaders(0, resetMs),
+        'Retry-After': String(Math.ceil(resetMs / 1000))
+      }
+    });
+  }
+  
   let items = [];
   try {
     const res = await fetch(
@@ -120,6 +141,7 @@ export default async function handler(req) {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 's-maxage=120, stale-while-revalidate=600',
+      ...rateLimitHeaders(remaining, resetMs),
     },
   });
 }
